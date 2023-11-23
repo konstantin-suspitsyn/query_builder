@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  db-customer:
+    container_name: 'db-query-builder'
+    image: 'postgres:16-bullseye'
+    restart: 'always'
+    environment:
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'postgres'
+      POSTGRES_INITDB_ARGS: '--auth-host=scram-sha-256'
+      POSTGRES_HOST_AUTH_METHOD: 'scram-sha-256'
+      POSTGRES_DB: 'query_builder'
+    ports:
+      - '5433:5432'
