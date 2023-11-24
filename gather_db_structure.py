@@ -5,9 +5,7 @@ import os
 import warnings
 
 FILTERS = r"db_structure\standard_filters"
-
 JOINS = r"db_structure\joins"
-
 TABLES = r"db_structure\tables"
 
 
@@ -87,7 +85,7 @@ class TablesInfoLoader:
 
         # TODO: Add mandatory fields
         self.__tables_dict = gather_data_from_toml_files_into_big_dictionary(list_of_tables, "table")
-        self.__joins_dict = gather_data_from_toml_files_into_big_dictionary(list_of_joins, "join_name", )
+        self.__joins_dict = gather_data_from_toml_files_into_big_dictionary(list_of_joins, "first_table", )
         self.__filters_dict = gather_data_from_toml_files_into_big_dictionary(list_of_filters, "filter_name")
 
         self.__redistribute_joins_by_table()
@@ -104,20 +102,23 @@ class TablesInfoLoader:
         # TODO: write check joins
         pass
 
-    def __redistribute_joins_by_table(self) -> None:
+    def __redistribute_joins_by_table_and_generate_all_fields(self) -> None:
         """
         Creates structure to make queries fast
         Groups all tables by it type of join with structure
         {
         left:
             {table_name:
-                {all tables right to table name: join_on }
+                {tables right to table name: join_on }
             },
 
         right...
         }
         :return:
         """
+
+        # TODO: generate all fields list
+
         self.__joins_by_table["left"] = {}
         self.__joins_by_table["right"] = {}
         self.__joins_by_table["inner"] = {}
@@ -128,34 +129,19 @@ class TablesInfoLoader:
                                                           self.__joins_dict[name]["schema"],
                                                           self.__joins_dict[name]["first_table"])
 
-            table_second_complete_name = "{}.{}.{}".format(self.__joins_dict[name]["database"],
-                                                           self.__joins_dict[name]["schema"],
-                                                           self.__joins_dict[name]["second_table"])
+            for join_field in self.__joins_dict[name]["second_table"]:
+                table_second_complete_name = "{}.{}.{}".format(self.__joins_dict[name]["database"],
+                                                               self.__joins_dict[name]["schema"],
+                                                               join_field)
 
-            on_generation = ""
+                on_generation = self.__joins_dict[name]["second_table"][join_field]["on"]
 
-            i = 0
+                how = self.__joins_dict[name]["second_table"][join_field]["how"]
 
-            for join_field in self.__joins_dict[name]["first_table_on"]:
-                if on_generation != "":
-                    on_generation += " and "
-
-                # TODO: дописать логику, если мы джойним не с равно, а другими знаками,
-                #  например с > и <, нужно знаки оставить, а названия таблиц ставить с бд.схема.таблица
-                on_generation += "{}.{} = {}.{}".format(table_first_complete_name,
-                                                        join_field,
-                                                        table_second_complete_name,
-                                                        self.__joins_dict[name]["second_table_on"][i])
-
-                i += 1
-
-            if self.__joins_dict[name]["how"] == "left":
-                if table_first_complete_name not in self.__joins_by_table["left"]:
-                    self.__joins_by_table["left"][table_first_complete_name] = {}
-                self.__joins_by_table["left"][table_first_complete_name][table_second_complete_name] = \
+                if table_first_complete_name not in self.__joins_by_table[how]:
+                    self.__joins_by_table[how][table_first_complete_name] = {}
+                self.__joins_by_table[how][table_first_complete_name][table_second_complete_name] = \
                     on_generation
-
-            # TODO: дописать inner join и подумать, нужен ли right join
 
     def get_tables_dictionary(self) -> dict:
         return self.__tables_dict
@@ -177,6 +163,7 @@ class RepeatingTableException(Exception):
     """
     Error is thrown where we got two or more objects with repeating names
     """
+
     def __init__(self, file_name: str, name: str, duplicate_key_name: str) -> None:
         message = f"В файле {file_name} обнаружен дубликат {duplicate_key_name} {name}"
         super().__init__(message)
@@ -190,4 +177,4 @@ class NoMandatoryKeyException(Exception):
 
 if __name__ == "__main__":
     c = TablesInfoLoader()
-    print(c.get_tables_dictionary())
+    print(c.get_joins_by_table_dictionary())

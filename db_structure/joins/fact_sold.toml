@@ -3,5 +3,5 @@ schema = "public"
 database = "query_builder"
 
 [second_table]
-dim_item = {how="left", on=["sk_item_id = sk_item_id"]}
-dim_cfo = {how="inner", on=["sk_cfo_id = sk_cfo_id"]}
+dim_item = {how="left", on="fact_sold.sk_item_id = dim_item.sk_item_id"}
+dim_cfo = {how="inner", on="fact_sold.sk_cfo_id = dim_cfo.sk_cfo_id"}

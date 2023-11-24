@@ -3,4 +3,4 @@ schema = "public"
 database = "query_builder"
 
 [second_table]
-dim_item = {how="inner", on=["bk_combined_map = bk_combined_map"]}
+dim_item = {how="inner", on="dim_account.bk_combined_map = dim_item.bk_combined_map"}
