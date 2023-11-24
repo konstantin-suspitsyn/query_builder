@@ -1,0 +1,8 @@
+table = "fact_sold"
+schema = "public"
+database = "query_builder"
+
+[fields]
+sk_item_id = {type = "select", show = "false"}
+sk_cfo_id = {type = "select",show = "false"}
+value = {type = "math", name="Количество проданного, шт.", show="true"}

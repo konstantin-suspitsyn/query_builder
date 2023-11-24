@@ -1,0 +1,9 @@
+table = "dim_account"
+schema = "public"
+database = "query_builder"
+
+[fields]
+sk_account_id = {type = "select", show = "false"}
+bk_account_id = {type = "select",show = "false"}
+bk_account_name = {type = "select",show = "true", name="Название счета"}
+bk_combined_map = {type = "groupping", name="Жанр", show="true", exclude_from_group = ["sk_account_id", "bk_account_id", "bk_account_name"], same_field="query_builder.public.dim_item.bk_combined_map"}
