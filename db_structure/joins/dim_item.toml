@@ -1,0 +1,6 @@
+first_table = "dim_item"
+schema = "public"
+database = "query_builder"
+
+[second_table]
+dim_account = {how="inner", on=["bk_combined_map = bk_combined_map"]}

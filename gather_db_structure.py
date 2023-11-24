@@ -34,7 +34,7 @@ def gather_data_from_toml_files_into_big_dictionary(list_of_files: list, check_f
     """
     Gathers data from toml files and check for duplicates and mandatory fields
     :param list_of_files: list with paths to toml files
-    :param check_for_duplicate_key: name of key to check for duplicates
+    :param check_for_duplicate_key: name of key to check for duplicates. So we would not have two same tables
     :param mandatory_keys: keys that toml file should contain
     :return: dictionary from all files
     """
@@ -46,10 +46,11 @@ def gather_data_from_toml_files_into_big_dictionary(list_of_files: list, check_f
     for file in list_of_files:
         temp_toml: dict = toml.load(file)
 
+        # TODO: Надо добавить бд и схему
         non_duplicate_key = temp_toml[check_for_duplicate_key]
 
         if non_duplicate_key in result:
-            raise RepeatingTableException(file, check_for_duplicate_key)
+            raise RepeatingTableException(file, non_duplicate_key, check_for_duplicate_key)
 
         for key in mandatory_keys:
             if key not in temp_toml:
@@ -160,27 +161,33 @@ class TablesInfoLoader:
         return self.__tables_dict
 
     def get_joins_dictionary(self) -> dict:
+        """Returns joins with dictionary"""
         return self.__joins_dict
 
     def get_joins_by_table_dictionary(self) -> dict:
+        """Returns dictionary with tables and their properties"""
         return self.__joins_by_table
 
     def get_filters_dictionary(self) -> dict:
+        """Returns dictionary with filters"""
         return self.__filters_dict
 
 
 class RepeatingTableException(Exception):
-    def __init__(self, file_name: str, name: str, duplicate_key_name: str):
+    """
+    Error is thrown where we got two or more objects with repeating names
+    """
+    def __init__(self, file_name: str, name: str, duplicate_key_name: str) -> None:
         message = f"В файле {file_name} обнаружен дубликат {duplicate_key_name} {name}"
         super().__init__(message)
 
 
 class NoMandatoryKeyException(Exception):
-    def __init__(self, file_name: str, key: str):
+    def __init__(self, file_name: str, key: str) -> None:
         message = f"В файле {file_name} не найден ключ {key}"
         super().__init__(message)
 
 
 if __name__ == "__main__":
     c = TablesInfoLoader()
-    print(c.get_joins_by_table_dictionary())
+    print(c.get_tables_dictionary())

@@ -1,0 +1,7 @@
+first_table = "fact_revenue"
+schema = "public"
+database = "query_builder"
+
+[second_table]
+dim_account = {how="left", on=["sk_account_id", "sk_account_id"]}
+dim_cfo = {how="inner", on=["sk_cfo_id = sk_cfo_id"]}
