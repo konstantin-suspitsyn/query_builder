@@ -68,6 +68,7 @@ class TablesInfoLoader:
     __joins_dict: dict = {}
     __filters_dict: dict = {}
     __joins_by_table: dict = {}
+    __fields_dict: dict = {}
 
     def __init__(self, tables: str = TABLES, filters: str = FILTERS, joins: str = JOINS) -> None:
         """
@@ -88,7 +89,7 @@ class TablesInfoLoader:
         self.__joins_dict = gather_data_from_toml_files_into_big_dictionary(list_of_joins, "first_table", )
         self.__filters_dict = gather_data_from_toml_files_into_big_dictionary(list_of_filters, "filter_name")
 
-        self.__redistribute_joins_by_table()
+        self.__redistribute_joins_by_table_and_generate_all_fields()
 
     def check_tables_dict(self):
         # TODO: write check for tree-fields

@@ -1,6 +1,7 @@
 table = "fact_revenue"
 schema = "public"
 database = "query_builder"
+table_type = "data"
 
 [fields]
 sk_account_id = {type = "select", show = "false"}
