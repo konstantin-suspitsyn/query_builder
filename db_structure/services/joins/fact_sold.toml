@@ -1,6 +1,7 @@
 first_table = "fact_sold"
 schema = "public"
 database = "query_builder"
+universe = "services"
 
 [second_table]
 dim_item = {how="left", on="fact_sold.sk_item_id = dim_item.sk_item_id"}
