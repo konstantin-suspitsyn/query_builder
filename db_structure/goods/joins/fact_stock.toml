@@ -1,0 +1,8 @@
+first_table = "fact_stock"
+schema = "public"
+database = "query_builder"
+
+[second_table]
+dim_item = {how="inner", on="fact_stock.sk_item_id = dim_item.sk_item_id"}
+dim_warehouse = {how="inner", on="fact_stock.sk_warehouse_id = dim_warehouse.sk_warehouse_id"}
+dim_calendar = {how="left", on="fact_stock.date = dim_calendar.date"}
