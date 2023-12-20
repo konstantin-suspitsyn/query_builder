@@ -1,9 +1,0 @@
-table = "fact_revenue"
-schema = "public"
-database = "query_builder"
-table_type = "data"
-
-[fields]
-sk_account_id = {type = "select", show = "false"}
-sk_cfo_id = {type = "select",show = "false"}
-value = {type = "math", name="Сумма выручки, коп.", show="true"}

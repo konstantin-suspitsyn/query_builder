@@ -178,4 +178,4 @@ class NoMandatoryKeyException(Exception):
 
 if __name__ == "__main__":
     c = TablesInfoLoader()
-    print(c.get_joins_by_table_dictionary())
+    print(c.get_tables_dictionary())

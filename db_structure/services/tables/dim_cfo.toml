@@ -1,9 +1,0 @@
-table = "dim_cfo"
-schema = "public"
-database = "query_builder"
-table_type = "dimesion"
-
-[fields]
-sk_cfo_id = {type = "select", show = "false"}
-bk_cfo_id = {type = "select",show = "false"}
-bk_cfo_name = {type = "select", name="ЦФО", show="true"}

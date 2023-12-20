@@ -1,6 +1,0 @@
-first_table = "dim_cfo"
-schema = "public"
-database = "query_builder"
-
-[second_table]
-fact_revenue = {how="inner", on="dim_cfo.sk_cfo_id = fact_revenue.sk_cfo_id"}
