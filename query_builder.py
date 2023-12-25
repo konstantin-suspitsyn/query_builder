@@ -1,7 +1,11 @@
 from gather_db_structure import TablesInfoLoader
 
 
-class TestWorker:
+class PreQueryBuilder:
+    """
+    Gets all types of data
+    Builds non-language specific query for language specific worker
+    """
 
     def __init__(self, dict_fields: dict, joins_by_table: dict) -> None:
         """
@@ -11,25 +15,38 @@ class TestWorker:
         self.dict_fields = dict_fields
         self.joins_by_table = joins_by_table
 
-    def __get_all_tables_from_fields(self) -> set:
-        list_of_tables = []
-        list_of_fields = self.dict_fields["select"]
-        for field in list_of_fields:
-            list_of_tables.append(field[:field.rfind(".")])
+    def get_all_fields_for_query_and_sort(self, all_fields: list) -> dict:
+        """
+        Gets all fields for query and sort them by types od tables, fields and filters
+        :param all_fields: list with fields [database.schema.table.field,]
+        :return: dictionary with {table: field} structure
+        """
+        all_fields_by_table = {}
+        for field in all_fields:
+            current_table = self.__get_table_from_field(field)
 
-        return set(list_of_tables)
+            if current_table in all_fields_by_table:
+                all_fields_by_table[current_table] = []
 
-    def count_joins_with_types(self):
-        count_all_tables_by_joins = {}
-        for key in self.joins_by_table:
-            count_all_tables_by_joins[key] = {}
+            # TODO: check field and separate to joinable and unjoinable
 
-        for table in self.__get_all_tables_from_fields():
-            for join_type in self.joins_by_table:
-                if table not in self.joins_by_table[join_type]:
-                    continue
+            all_fields_by_table[current_table].append(field)
 
-                # посчитать кол-во прав
+        return all_fields_by_table
+
+    @staticmethod
+    def __get_table_from_field(long_field: str) -> str:
+        """
+        Helper function to get table from long_field name
+        :param long_field: long_field from frontend
+        :return: string with name of table
+        """
+        return long_field[:len(long_field.split(".")[:-1])]
+
+    # TODO: посчитать сколько фактовых таблиц. Если много, то делать отдельные СTE
+    # TODO: Посмотреть что с датами. Если есть группировки по датам, то группировать
+    # TODO: Обязательная проверка всех соединений
+    # TODO: Внедрить алгоритм Дейкстры
 
 
 if __name__ == "__main__":

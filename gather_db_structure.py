@@ -27,6 +27,17 @@ def list_toml_files_in_directory(directory: str) -> list:
     return all_files
 
 
+def true_false_converter(tf: str) -> bool:
+    """
+    Converter to return true or false from string
+    :param tf: true of false string
+    :return: True or False
+    """
+    if tf.lower() == "true":
+        return True
+    return False
+
+
 def gather_data_from_toml_files_into_big_dictionary(list_of_files: list, check_for_duplicate_key: str,
                                                     mandatory_keys: Optional[list | None] = None, ) -> dict:
     """
@@ -44,7 +55,6 @@ def gather_data_from_toml_files_into_big_dictionary(list_of_files: list, check_f
     for file in list_of_files:
         temp_toml: dict = toml.load(file)
 
-        # TODO: Надо добавить бд и схему
         non_duplicate_key = temp_toml[check_for_duplicate_key]
 
         if non_duplicate_key in result:
@@ -69,6 +79,7 @@ class TablesInfoLoader:
     __filters_dict: dict = {}
     __joins_by_table: dict = {}
     __fields_dict: dict = {}
+    __complete_dict_of_fields: dict = {}
 
     def __init__(self, tables: str = TABLES, filters: str = FILTERS, joins: str = JOINS) -> None:
         """
@@ -86,10 +97,55 @@ class TablesInfoLoader:
 
         # TODO: Add mandatory fields
         self.__tables_dict = gather_data_from_toml_files_into_big_dictionary(list_of_tables, "table")
-        self.__joins_dict = gather_data_from_toml_files_into_big_dictionary(list_of_joins, "first_table", )
+        self.__joins_dict = gather_data_from_toml_files_into_big_dictionary(list_of_joins, "first_table")
         self.__filters_dict = gather_data_from_toml_files_into_big_dictionary(list_of_filters, "filter_name")
 
         self.__redistribute_joins_by_table_and_generate_all_fields()
+        self.__create_list_of_fields()
+
+    def __create_list_of_fields(self) -> None:
+        """
+        Creates dictionary with all fields and it's properties
+        :return: None
+        """
+        for file_name in self.__tables_dict:
+            table_name = self.__tables_dict[file_name]["table"]
+            schema_name = self.__tables_dict[file_name]["schema"]
+            database_name = self.__tables_dict[file_name]["database"]
+
+            if "fields" in self.__tables_dict[file_name]:
+                for field_name in self.__tables_dict[file_name]["fields"]:
+                    self.__fill_in_field(database_name, field_name, "fields", file_name, schema_name, table_name)
+
+            if "calculations" in self.__tables_dict[file_name]:
+                for field_name in self.__tables_dict[file_name]["calculations"]:
+                    self.__fill_in_field(database_name, field_name, "calculations", file_name, schema_name, table_name)
+                    #TODO: Дописать кучу всего про Calculations
+
+    def __fill_in_field(self, database_name: str, field_name: str, field_type: str, file_name: str, schema_name: str,
+                        table_name: str) -> None:
+        """
+        Helper method to fill in properties of field
+        :param database_name:
+        :param field_name:
+        :param field_type:
+        :param file_name:
+        :param schema_name:
+        :param table_name:
+        :return:
+        """
+        complete_field_name = "{}.{}.{}.{}".format(database_name,
+                                                   schema_name,
+                                                   table_name,
+                                                   field_name)
+        self.__complete_dict_of_fields[complete_field_name] = {}
+        self.__complete_dict_of_fields[complete_field_name]["type"] = self.__tables_dict[file_name][
+            field_type][field_name]["type"]
+        self.__complete_dict_of_fields[complete_field_name]["show"] = \
+            true_false_converter(self.__tables_dict[file_name][field_type][field_name]["show"])
+        if self.__complete_dict_of_fields[complete_field_name]["show"]:
+            self.__complete_dict_of_fields[complete_field_name]["name"] = \
+                self.__tables_dict[file_name][field_type][field_name]["name"]
 
     def check_tables_dict(self):
         # TODO: write check for tree-fields
@@ -159,6 +215,10 @@ class TablesInfoLoader:
         """Returns dictionary with filters"""
         return self.__filters_dict
 
+    def get_all_fields(self) -> dict:
+        """Returns dictionary with all fields"""
+        return self.__complete_dict_of_fields
+
 
 class RepeatingTableException(Exception):
     """
@@ -178,4 +238,4 @@ class NoMandatoryKeyException(Exception):
 
 if __name__ == "__main__":
     c = TablesInfoLoader()
-    print(c.get_tables_dictionary())
+    print(c.get_all_fields())
