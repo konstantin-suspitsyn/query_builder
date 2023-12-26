@@ -1,8 +1,9 @@
-from typing import Optional
+from typing import Union
 
 import toml
 import os
 import warnings
+import re
 
 FILTERS = r"db_structure\standard_filters"
 JOINS = r"db_structure\joins"
@@ -39,7 +40,7 @@ def true_false_converter(tf: str) -> bool:
 
 
 def gather_data_from_toml_files_into_big_dictionary(list_of_files: list, check_for_duplicate_key: str,
-                                                    mandatory_keys: Optional[list | None] = None, ) -> dict:
+                                                    mandatory_keys: Union[list | None] = None, ) -> dict:
     """
     Gathers data from toml files and check for duplicates and mandatory fields
     :param list_of_files: list with paths to toml files
@@ -67,6 +68,42 @@ def gather_data_from_toml_files_into_big_dictionary(list_of_files: list, check_f
         result[non_duplicate_key] = temp_toml
 
     return result
+
+
+def split_to_fields(calculation: str, full_table_name: str) -> list:
+    """
+    Splits calculation formula into fields. Ignores fields from current table
+    :param calculation: calculation formula
+    :param full_table_name:
+    :return:
+    """
+    needed_fields = []
+
+    # Get all inside sum()/ avg() and so on
+    string_inside_brackets: str = re.search(r"\((.*?)\)", calculation).group(0)
+
+    for item in ["(", ")", "+", "-", "*", "//"]:
+        string_inside_brackets = string_inside_brackets.replace(item, " ")
+
+    string_inside_brackets = re.sub(" +", " ", string_inside_brackets)
+
+    for field in string_inside_brackets.split(" "):
+        if (field != "") and (field[:len(full_table_name)] != full_table_name):
+            needed_fields.append(field)
+
+    return needed_fields
+
+
+def always_return_list(input_data: Union[str, list]) -> list:
+    """
+    Checks if input data is a str and returns it as a list
+    :param input_data: list or string
+    :return: list
+    """
+    if isinstance(input_data, str):
+        return [input_data]
+
+    return input_data
 
 
 class TablesInfoLoader:
@@ -120,7 +157,7 @@ class TablesInfoLoader:
             if "calculations" in self.__tables_dict[file_name]:
                 for field_name in self.__tables_dict[file_name]["calculations"]:
                     self.__fill_in_field(database_name, field_name, "calculations", file_name, schema_name, table_name)
-                    #TODO: Дописать кучу всего про Calculations
+                    # TODO: Дописать кучу всего про Calculations
 
     def __fill_in_field(self, database_name: str, field_name: str, field_type: str, file_name: str, schema_name: str,
                         table_name: str) -> None:
@@ -146,6 +183,26 @@ class TablesInfoLoader:
         if self.__complete_dict_of_fields[complete_field_name]["show"]:
             self.__complete_dict_of_fields[complete_field_name]["name"] = \
                 self.__tables_dict[file_name][field_type][field_name]["name"]
+
+        # TODO: может надо отрефакторить
+        if field_type == "calculations":
+            calculation = self.__tables_dict[file_name][field_type][field_name]["calculation"]
+            self.__complete_dict_of_fields[complete_field_name]["calculation"] = calculation
+
+            additional_fields = split_to_fields(calculation, "{}.{}.{}".format(database_name,
+                                                                               schema_name,
+                                                                               table_name))
+
+            self.__complete_dict_of_fields[complete_field_name]["additional_fields"] = additional_fields
+            self.__complete_dict_of_fields[complete_field_name]["where"] = \
+                self.__tables_dict[file_name][field_type][
+                    field_name]["where"]
+
+            self.__complete_dict_of_fields[complete_field_name]["fact_must_join_on"] = always_return_list(
+                self.__tables_dict[file_name][field_type][field_name]["fact_must_join_on"])
+
+            self.__complete_dict_of_fields[complete_field_name]["no_join_fact"] = always_return_list(
+                self.__tables_dict[file_name][field_type][field_name]["no_join_fact"])
 
     def check_tables_dict(self):
         # TODO: write check for tree-fields
