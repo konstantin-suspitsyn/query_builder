@@ -111,12 +111,13 @@ class TablesInfoLoader:
     Tables loading class with all possible joins and filters
     """
 
-    __tables_dict: dict = {}
+    __toml_tables_files_dict: dict = {}
     __joins_dict: dict = {}
     __filters_dict: dict = {}
     __joins_by_table: dict = {}
     __fields_dict: dict = {}
     __complete_dict_of_fields: dict = {}
+    __short_tables_dictionary: dict = {}
 
     def __init__(self, tables: str = TABLES, filters: str = FILTERS, joins: str = JOINS) -> None:
         """
@@ -133,34 +134,39 @@ class TablesInfoLoader:
         list_of_joins = list_toml_files_in_directory(os.path.join(self.current_path, joins))
 
         # TODO: Add mandatory fields
-        self.__tables_dict = gather_data_from_toml_files_into_big_dictionary(list_of_tables, "table")
+        self.__toml_tables_files_dict = gather_data_from_toml_files_into_big_dictionary(list_of_tables, "table")
         self.__joins_dict = gather_data_from_toml_files_into_big_dictionary(list_of_joins, "first_table")
         self.__filters_dict = gather_data_from_toml_files_into_big_dictionary(list_of_filters, "filter_name")
 
         self.__redistribute_joins_by_table_and_generate_all_fields()
-        self.__create_list_of_fields()
+        self.__create_list_of_fields_and_short_dicts()
 
-    def __create_list_of_fields(self) -> None:
+    def __create_list_of_fields_and_short_dicts(self) -> None:
         """
         Creates dictionary with all fields and it's properties
         :return: None
         """
-        for file_name in self.__tables_dict:
-            table_name = self.__tables_dict[file_name]["table"]
-            schema_name = self.__tables_dict[file_name]["schema"]
-            database_name = self.__tables_dict[file_name]["database"]
+        for file_name in self.__toml_tables_files_dict:
 
-            if "fields" in self.__tables_dict[file_name]:
-                for field_name in self.__tables_dict[file_name]["fields"]:
+            table_name = self.__toml_tables_files_dict[file_name]["table"]
+            schema_name = self.__toml_tables_files_dict[file_name]["schema"]
+            database_name = self.__toml_tables_files_dict[file_name]["database"]
+            table_full_name = "{}.{}.{}".format(database_name, schema_name, table_name)
+
+            self.__short_tables_dictionary[table_full_name] = self.__toml_tables_files_dict[file_name]["table_type"]
+
+            if "fields" in self.__toml_tables_files_dict[file_name]:
+                for field_name in self.__toml_tables_files_dict[file_name]["fields"]:
                     self.__fill_in_field(database_name, field_name, "fields", file_name, schema_name, table_name)
 
-            if "calculations" in self.__tables_dict[file_name]:
-                for field_name in self.__tables_dict[file_name]["calculations"]:
+            if "calculations" in self.__toml_tables_files_dict[file_name]:
+                for field_name in self.__toml_tables_files_dict[file_name]["calculations"]:
                     self.__fill_in_field(database_name, field_name, "calculations", file_name, schema_name, table_name)
-                    # TODO: Дописать кучу всего про Calculations
 
     def __fill_in_field(self, database_name: str, field_name: str, field_type: str, file_name: str, schema_name: str,
                         table_name: str) -> None:
+
+        # TODO: DON'T really like this function
         """
         Helper method to fill in properties of field
         :param database_name:
@@ -176,17 +182,17 @@ class TablesInfoLoader:
                                                    table_name,
                                                    field_name)
         self.__complete_dict_of_fields[complete_field_name] = {}
-        self.__complete_dict_of_fields[complete_field_name]["type"] = self.__tables_dict[file_name][
+        self.__complete_dict_of_fields[complete_field_name]["type"] = self.__toml_tables_files_dict[file_name][
             field_type][field_name]["type"]
         self.__complete_dict_of_fields[complete_field_name]["show"] = \
-            true_false_converter(self.__tables_dict[file_name][field_type][field_name]["show"])
+            true_false_converter(self.__toml_tables_files_dict[file_name][field_type][field_name]["show"])
         if self.__complete_dict_of_fields[complete_field_name]["show"]:
             self.__complete_dict_of_fields[complete_field_name]["name"] = \
-                self.__tables_dict[file_name][field_type][field_name]["name"]
+                self.__toml_tables_files_dict[file_name][field_type][field_name]["name"]
 
         # TODO: может надо отрефакторить
         if field_type == "calculations":
-            calculation = self.__tables_dict[file_name][field_type][field_name]["calculation"]
+            calculation = self.__toml_tables_files_dict[file_name][field_type][field_name]["calculation"]
             self.__complete_dict_of_fields[complete_field_name]["calculation"] = calculation
 
             additional_fields = split_to_fields(calculation, "{}.{}.{}".format(database_name,
@@ -195,14 +201,14 @@ class TablesInfoLoader:
 
             self.__complete_dict_of_fields[complete_field_name]["additional_fields"] = additional_fields
             self.__complete_dict_of_fields[complete_field_name]["where"] = \
-                self.__tables_dict[file_name][field_type][
+                self.__toml_tables_files_dict[file_name][field_type][
                     field_name]["where"]
 
             self.__complete_dict_of_fields[complete_field_name]["fact_must_join_on"] = always_return_list(
-                self.__tables_dict[file_name][field_type][field_name]["fact_must_join_on"])
+                self.__toml_tables_files_dict[file_name][field_type][field_name]["fact_must_join_on"])
 
             self.__complete_dict_of_fields[complete_field_name]["no_join_fact"] = always_return_list(
-                self.__tables_dict[file_name][field_type][field_name]["no_join_fact"])
+                self.__toml_tables_files_dict[file_name][field_type][field_name]["no_join_fact"])
 
     def check_tables_dict(self):
         # TODO: write check for tree-fields
@@ -257,8 +263,8 @@ class TablesInfoLoader:
                 self.__joins_by_table[how][table_first_complete_name][table_second_complete_name] = \
                     on_generation
 
-    def get_tables_dictionary(self) -> dict:
-        return self.__tables_dict
+    def get_all_tables(self) -> dict:
+        return self.__short_tables_dictionary
 
     def get_joins_dictionary(self) -> dict:
         """Returns joins with dictionary"""
@@ -296,3 +302,4 @@ class NoMandatoryKeyException(Exception):
 if __name__ == "__main__":
     c = TablesInfoLoader()
     print(c.get_all_fields())
+    print(c.get_all_tables())
