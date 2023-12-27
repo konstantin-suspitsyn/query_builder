@@ -1,3 +1,4 @@
+from enum_query_builder import TomlTableTableTypeFieldPossibleValues
 from exceptions_query_builder import UnknownTableTypeProperty
 from gather_db_structure import TablesInfoLoader
 
@@ -33,11 +34,11 @@ class PreQueryBuilder:
         :return: dictionary with {table: field} structure
         """
 
-        # TODO generate all table types from dictionary
-        all_fields_by_table = {
-            "data_tables": {},
-            "dimension_tables": {}
-        }
+        all_fields_by_table = {}
+
+        # Generate all possible table types
+        for table_type in TomlTableTableTypeFieldPossibleValues:
+            all_fields_by_table[table_type.value] = {}
 
         for field in all_fields:
             current_table = get_table_from_field(field)
