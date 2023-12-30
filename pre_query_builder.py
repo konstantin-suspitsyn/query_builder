@@ -4,7 +4,7 @@ from enum_query_builder import TomlTableTableTypeFieldPossibleValues, TomlPossib
     TomlTableCalculationFieldProperties
 from exceptions_query_builder import UnknownTableFieldProperty
 from gather_db_structure import TablesInfoLoader
-from utilities_query_builder import get_table_from_field, split_to_fields
+from utilities_query_builder import get_table_from_field, split_to_fields, split_where_string_to_fields
 
 
 class PreQueryBuilder:
@@ -86,9 +86,9 @@ class PreQueryBuilder:
             :return: current_table_type, current_table
             """
             current_function_table = get_table_from_field(current_field)
-            current_function_table_type = self.dict_table[current_function_table]["type"]
+            current_function_table_type = self.dict_table[current_function_table]
 
-            if current_function_table not in all_fields_by_table[current_function_table]:
+            if current_function_table not in all_fields_by_table[current_function_table_type]:
                 all_fields_by_table[current_function_table_type][current_function_table] = create_table_structure()
 
             return current_function_table_type, current_function_table
@@ -122,28 +122,29 @@ class PreQueryBuilder:
         for table_type in TomlTableTableTypeFieldPossibleValues:
             all_fields_by_table[table_type.value] = {}
 
-        all_fields_by_table["where"] = list()
-
         for field in fields_for_query_structure["select"]:
             current_table_type, current_table = create_table_if_not_exists(field)
 
             # There are two types of fields. Simple select and pre-calculated select
             # Simple select field (select or value)
-            if (self.dict_fields[field] == TomlPossibleFieldKeywordsForTable.TYPE_SELECT.value) \
-                    or (self.dict_fields[field] == TomlPossibleFieldKeywordsForTable.TYPE_VALUE.value):
+            if (self.dict_fields[field]["type"] == TomlPossibleFieldKeywordsForTable.TYPE_SELECT.value) \
+                    or (self.dict_fields[field]["type"] == TomlPossibleFieldKeywordsForTable.TYPE_VALUE.value):
                 all_fields_by_table[current_table_type][current_table]["select"].add(field)
+
             # Calculation type
             elif self.dict_fields[field] == TomlPossibleFieldKeywordsForTable.TYPE_CALCULATION.value:
                 calculated_field_to_structure(field, current_table, current_table_type)
             else:
                 raise UnknownTableFieldProperty(current_table, field, self.dict_fields[field])
 
-        for field in fields_for_query_structure["where"]:
+        all_fields_by_table["where"] = fields_for_query_structure["where"]
+
+        for field in split_where_string_to_fields(fields_for_query_structure["where"], self.dict_fields):
             current_table_type, current_table = create_table_if_not_exists(field)
-            # TODO: это будет выглядеть по-другому
-            all_fields_by_table[current_table_type][current_table]["where"][field].add(fields_for_query_structure[
-                "where"][field])
-            all_fields_by_table[current_table_type][current_table]["not_for_select"].add(field)
+
+            # Adding to not for select only if we don't have it in select directly
+            if field not in all_fields_by_table[current_table_type][current_table]["select"]:
+                all_fields_by_table[current_table_type][current_table]["not_for_select"].add(field)
 
         return all_fields_by_table
 

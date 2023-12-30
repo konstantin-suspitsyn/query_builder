@@ -35,4 +35,26 @@ def get_table_from_field(long_field: str) -> str:
     :param long_field: long_field from frontend
     :return: string with name of table
     """
-    return long_field[:len(long_field.split(".")[:-1])]
+    return long_field[:len(long_field) - len(long_field.split(".")[-1]) - 1]
+
+
+def split_where_string_to_fields(where: str, fields: dict) -> set:
+    """
+    Splits where string and checks if field exists in dictionary
+    :param where: string with where conditions
+    :param fields: dictionary with all fields in keys
+    :return: list of fields
+    """
+    list_of_fields = set()
+
+    splitter_list = ["and", " ", "or", "(", ")", ">", "=", "<", "is", "none", "not", "*", ]
+    where = where.lower()
+
+    for splitter in splitter_list:
+        where = where.replace(splitter, " ")
+
+    for field in where.split(" "):
+        if field in fields:
+            list_of_fields.add(field)
+
+    return list_of_fields
