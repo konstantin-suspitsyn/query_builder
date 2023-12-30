@@ -38,6 +38,17 @@ class TomlTableCalculationFieldMandatoryProperties(enum.Enum):
     FACT_MUST_JOIN_ON = "fact_must_join_on"
 
 
+class TomlTableCalculationFieldProperties(enum.Enum):
+    """
+    All properties for calculated fields
+    """
+    CALCULATION = "calculation"
+    WHERE = "where"
+    FACT_MUST_JOIN_ON = "fact_must_join_on"
+    NO_JOIN_FACT = "no_join_fact"
+    NAME = "name"
+
+
 class TomlMandatoryJoins(enum.Enum):
     """
     All mandatory properties for toml in joins folder
@@ -54,3 +65,20 @@ class TomlMandatoryJoinsForSecondTable(enum.Enum):
     """
     HOW = "how"
     ON = "on"
+
+
+class TomlPossibleTypesOfFieldsOfTable(enum.Enum):
+    """
+    Possible types of fields of table folder
+    """
+    FIELDS = "fields"
+    CALCULATIONS = "calculations"
+
+
+class TomlPossibleFieldKeywordsForTable(enum.Enum):
+    """
+
+    """
+    TYPE_SELECT = "select"
+    TYPE_VALUE = "value"
+    TYPE_CALCULATION = "calculation"
