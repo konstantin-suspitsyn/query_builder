@@ -28,7 +28,7 @@ class PreQueryBuilder:
         :param fields_for_query_structure: dictionary with fields from frontend
             {
                 "select": [list of fields to select, ...],
-                "calculations": {field: calculation,...},
+                "calculations": [list of calculations],
                 "where": {field: string with condition,...}
             }
         :return: dictionary with
@@ -93,15 +93,35 @@ class PreQueryBuilder:
 
             return current_function_table_type, current_function_table
 
-        def calculated_field_to_structure(current_calculated_field: str, current_table_name: str,
+        def get_all_fields_from_calculation(calculation_formula: str) -> dict:
+            """
+            Returns all tables by type
+            :param calculation_formula:
+            :return: {"table_type": set of field names}
+            """
+
+            tables_from_calculation = dict()
+            for f_current_table_type in TomlTableTableTypeFieldPossibleValues:
+                tables_from_calculation[f_current_table_type.value] = set()
+
+            list_of_fields = split_to_fields(calculation_formula, None)
+            for current_field in list_of_fields:
+                _table_type = self.dict_table[get_table_from_field(current_field)]
+                tables_from_calculation[_table_type].add(current_field)
+
+            return tables_from_calculation
+
+        def calculated_field_to_structure(field_f: str, current_table_name: str,
                                           current_table_function_type: str) -> None:
             """
             Worker for any type of calculated fields
+            :param field_f:
             :param current_table_function_type:
-            :param current_calculated_field: calculated field
             :param current_table_name: current table name
             :return:
             """
+            current_calculated_field = self.dict_fields[field_f]["calculation"]
+
             list_of_fields = split_to_fields(current_calculated_field, current_table_name)
 
             for calculated_field in list_of_fields:
@@ -112,11 +132,11 @@ class PreQueryBuilder:
             all_fields_by_table[current_table_function_type][current_table_name]["calculations"].add(
                 current_calculated_field)
             all_fields_by_table[current_table_function_type][current_table_name]["where"].add(self.dict_fields[
-                current_table_name][TomlTableCalculationFieldProperties.WHERE.value])
-            all_fields_by_table[current_table_function_type][current_table_name]["fact_must_join_on"].add(
-                self.dict_fields[current_table_name][TomlTableCalculationFieldProperties.FACT_MUST_JOIN_ON.value])
-            all_fields_by_table[current_table_function_type][current_table_name]["no_join_fact"].add(self.dict_fields[
-                current_table_name][TomlTableCalculationFieldProperties.NO_JOIN_FACT.value])
+                field_f][TomlTableCalculationFieldProperties.WHERE.value])
+            all_fields_by_table[current_table_function_type][current_table_name]["fact_must_join_on"].update(
+                self.dict_fields[field_f][TomlTableCalculationFieldProperties.FACT_MUST_JOIN_ON.value])
+            all_fields_by_table[current_table_function_type][current_table_name]["no_join_fact"].update(self.dict_fields[
+                field_f][TomlTableCalculationFieldProperties.NO_JOIN_FACT.value])
 
         # Generate all possible table types
         for table_type in TomlTableTableTypeFieldPossibleValues:
@@ -132,13 +152,21 @@ class PreQueryBuilder:
                 all_fields_by_table[current_table_type][current_table]["select"].add(field)
 
             # Calculation type
-            elif self.dict_fields[field] == TomlPossibleFieldKeywordsForTable.TYPE_CALCULATION.value:
+            elif self.dict_fields[field]["type"] == TomlPossibleFieldKeywordsForTable.TYPE_CALCULATION.value:
                 calculated_field_to_structure(field, current_table, current_table_type)
             else:
                 raise UnknownTableFieldProperty(current_table, field, self.dict_fields[field])
 
-        all_fields_by_table["where"] = fields_for_query_structure["where"]
+        for field in fields_for_query_structure["calculations"]:
+            tables_in_calculation = get_all_fields_from_calculation(field)
+            if len(tables_in_calculation[TomlTableTableTypeFieldPossibleValues.DATA.value]) > 0:
+                current_table_type, current_table = create_table_if_not_exists(
+                    tables_in_calculation[TomlTableTableTypeFieldPossibleValues.DATA.value][0])
 
+                for non_act_table in tables_in_calculation[TomlTableTableTypeFieldPossibleValues.DIMENSION.value]:
+                    all_fields_by_table[current_table_type][current_table]["not_for_select"].add(non_act_table)
+
+        all_fields_by_table["where"] = fields_for_query_structure["where"]
         for field in split_where_string_to_fields(fields_for_query_structure["where"], self.dict_fields):
             current_table_type, current_table = create_table_if_not_exists(field)
 
