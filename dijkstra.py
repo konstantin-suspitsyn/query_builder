@@ -49,7 +49,7 @@ class DijkstraJoins:
                 join_dict[table][0]["table"] = table
                 for key in joins_by_table[start_table][table]:
                     join_dict[table][0][key] = joins_by_table[start_table][table][key]
-                if steps < min_node_count:
+                if (steps < min_node_count) & (table in joins_by_table):
                     min_node = table
                     min_node_count = steps
             else:
@@ -58,7 +58,7 @@ class DijkstraJoins:
         # Remove visited connections
         del joins_by_table[start_table]
 
-        j = self.recursive_joins(join_dict, joins_by_table, all_tables, min_node)
+        j = self.recursive_joins(join_dict, joins_by_table, set(joins_by_table.keys()), min_node)
 
         print(j)
 
