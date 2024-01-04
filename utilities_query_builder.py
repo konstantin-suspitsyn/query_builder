@@ -1,5 +1,5 @@
 import re
-from typing import Union
+from typing import Union, Callable, Tuple, Any, Dict
 
 
 def split_to_fields(calculation: str, full_table_name: Union[str | None]) -> list:
@@ -58,3 +58,19 @@ def split_where_string_to_fields(where: str, fields: dict) -> set:
             list_of_fields.add(field)
 
     return list_of_fields
+
+
+def singleton(class_):
+    """
+    Decorator for singleton class
+    :param class_:
+    :return:
+    """
+    instances = {}
+
+    def getinstance(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+
+    return getinstance

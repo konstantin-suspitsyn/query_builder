@@ -204,21 +204,13 @@ class TablesInfoLoader:
         Creates structure to make queries fast
         Groups all tables by it type of join with structure
         {
-        left:
-            {table_name:
-                {tables right to table name: join_on }
+        table_name:
+            {join_table:
+                {"how": left/right/inner, "on" = string_on }
             },
-
-        right...
         }
         :return:
         """
-
-        # TODO: generate all fields list
-
-        self.__joins_by_table["left"] = {}
-        self.__joins_by_table["right"] = {}
-        self.__joins_by_table["inner"] = {}
 
         for name in self.__joins_dict:
 
@@ -235,10 +227,11 @@ class TablesInfoLoader:
 
                 how = self.__joins_dict[name]["second_table"][join_field]["how"]
 
-                if table_first_complete_name not in self.__joins_by_table[how]:
-                    self.__joins_by_table[how][table_first_complete_name] = {}
-                self.__joins_by_table[how][table_first_complete_name][table_second_complete_name] = \
-                    on_generation
+                if table_first_complete_name not in self.__joins_by_table:
+                    self.__joins_by_table[table_first_complete_name] = {}
+                self.__joins_by_table[table_first_complete_name][table_second_complete_name] = {}
+                self.__joins_by_table[table_first_complete_name][table_second_complete_name]["how"] = how
+                self.__joins_by_table[table_first_complete_name][table_second_complete_name]["on"] = on_generation
 
     def get_all_tables(self) -> dict:
         return self.__short_tables_dictionary
@@ -278,5 +271,5 @@ class NoMandatoryKeyException(Exception):
 
 if __name__ == "__main__":
     c = TablesInfoLoader()
-    print(c.get_all_fields())
-    print(c.get_all_tables())
+    print(c.get_joins_by_table_dictionary())
+    print(c.get_joins_dictionary())
