@@ -104,6 +104,7 @@ class DijkstraJoins:
 if __name__ == "__main__":
     table_info_loader = TablesInfoLoader()
     tables = table_info_loader.get_all_tables()
-    direct_joins = table_info_loader.get_joins_by_table_dictionary()
-    dijkstra_joins = DijkstraJoins(direct_joins, tables)
+    direct_joins_ = table_info_loader.get_joins_by_table_dictionary()
+    dijkstra_joins = DijkstraJoins(direct_joins_, tables)
     dijkstra_joins.best_joins_for_start("query_builder.public.fact_stock")
+    dijkstra_joins.best_joins_for_start("query_builder.public.fact_sales")
