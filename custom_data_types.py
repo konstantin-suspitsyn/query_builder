@@ -12,9 +12,9 @@ class FieldsForQuery(UserDict):
             dictionary = {}
 
         if isinstance(dictionary, dict):
-            for key in TomlTableTableTypeFieldPossibleValues.value:
-                if key not in dictionary:
-                    dictionary[key] = {}
+            for key in TomlTableTableTypeFieldPossibleValues:
+                if key.value not in dictionary:
+                    dictionary[key.value] = {}
 
         super().__init__(dictionary)
 
@@ -80,9 +80,9 @@ class FieldsFromFrontend(UserDict):
             dictionary = {}
 
         if isinstance(dictionary, dict):
-            for key in FrontendTypeFields.value:
-                if key not in dictionary:
-                    dictionary[key] = []
+            for key in FrontendTypeFields:
+                if key.value not in dictionary:
+                    dictionary[key.value] = []
 
         super().__init__(dictionary)
 

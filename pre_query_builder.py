@@ -140,8 +140,7 @@ class PreQueryBuilder:
                 self.dict_fields[field_f][TomlTableCalculationFieldProperties.NO_JOIN_FACT.value])
 
         # Generate all possible table types
-        for table_type in TomlTableTableTypeFieldPossibleValues:
-            all_fields_by_table[table_type.value] = {}
+        all_fields_by_table = FieldsForQuery()
 
         for field in fields_for_query_structure["select"]:
             current_table_type, current_table = create_table_if_not_exists(field)
@@ -175,7 +174,7 @@ class PreQueryBuilder:
             if field not in all_fields_by_table[current_table_type][current_table]["select"]:
                 all_fields_by_table[current_table_type][current_table]["not_for_select"].add(field)
 
-        return FieldsForQuery(all_fields_by_table)
+        return all_fields_by_table
 
 
 if __name__ == "__main__":
