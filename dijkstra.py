@@ -19,6 +19,9 @@ class DijkstraJoins:
         for table in all_tables:
             self.all_tables.add(table)
 
+        for join_start_table in self.direct_joins:
+            self.best_joins_for_start(join_start_table)
+
     def return_join(self, start_table: str, end_table: str) -> bool | dict:
         if not self.joins.has_join(start_table, end_table):
             self.best_joins_for_start(start_table)
@@ -49,7 +52,7 @@ class DijkstraJoins:
                 join_dict[table][0]["table"] = table
                 for key in joins_by_table[start_table][table]:
                     join_dict[table][0][key] = joins_by_table[start_table][table][key]
-                if steps < min_node_count:
+                if (steps < min_node_count) & (table in joins_by_table):
                     min_node = table
                     min_node_count = steps
             else:
@@ -58,8 +61,15 @@ class DijkstraJoins:
         # Remove visited connections
         del joins_by_table[start_table]
 
-        j = self.recursive_joins(join_dict, joins_by_table, all_tables, min_node)
+        j = self.recursive_joins(join_dict, joins_by_table, set(joins_by_table.keys()), min_node)
 
+        key_list = list(j.keys())
+
+        for key in key_list:
+            if j[key]["steps"] == max_no:
+                del j[key]
+
+        self.joins.all_joins_by_starting_table({start_table: j})
         print(j)
 
     def recursive_joins(self, created_joins: dict, all_joins: dict, all_tables: set, next_node: str | None) -> dict:
@@ -104,6 +114,7 @@ class DijkstraJoins:
 if __name__ == "__main__":
     table_info_loader = TablesInfoLoader()
     tables = table_info_loader.get_all_tables()
-    direct_joins = table_info_loader.get_joins_by_table_dictionary()
-    dijkstra_joins = DijkstraJoins(direct_joins, tables)
+    direct_joins_ = table_info_loader.get_joins_by_table_dictionary()
+    dijkstra_joins = DijkstraJoins(direct_joins_, tables)
     dijkstra_joins.best_joins_for_start("query_builder.public.fact_stock")
+    dijkstra_joins.best_joins_for_start("query_builder.public.fact_sales")

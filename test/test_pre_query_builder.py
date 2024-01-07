@@ -1,3 +1,4 @@
+from custom_data_types import FieldsFromFrontend
 from gather_db_structure import TablesInfoLoader
 from pre_query_builder import PreQueryBuilder
 
@@ -9,7 +10,7 @@ one_table_from_front = {
     "where": "query_builder.public.dim_calendar.date = '2023-01-01'"
 }
 
-two_tables_from_front = {
+two_tables_from_front = FieldsFromFrontend({
     "select": [
         "query_builder.public.fact_stock.value",
         "query_builder.public.dim_item.name",
@@ -20,7 +21,7 @@ two_tables_from_front = {
         "sum(query_builder.public.fact_stock.value * query_builder.public.dim_item.price)"
     ],
     "where": "query_builder.public.dim_calendar.date = '2023-01-01'"
-}
+})
 
 if __name__ == "__main__":
     db = TablesInfoLoader()

@@ -1,5 +1,6 @@
 from typing import Tuple
 
+from custom_data_types import FieldsForQuery, FieldsFromFrontend
 from enum_query_builder import TomlTableTableTypeFieldPossibleValues, TomlPossibleFieldKeywordsForTable, \
     TomlTableCalculationFieldProperties
 from exceptions_query_builder import UnknownTableFieldProperty
@@ -22,7 +23,7 @@ class PreQueryBuilder:
         self.dict_fields = dict_fields
         self.dict_table = dict_table
 
-    def get_all_fields_for_query_and_sort(self, fields_for_query_structure: dict) -> dict:
+    def get_all_fields_for_query_and_sort(self, fields_for_query_structure: FieldsFromFrontend) -> FieldsForQuery:
         """
         Gets all fields for query and sort them by types od tables, fields and filters
         :param fields_for_query_structure: dictionary with fields from frontend
@@ -135,12 +136,11 @@ class PreQueryBuilder:
                 field_f][TomlTableCalculationFieldProperties.WHERE.value])
             all_fields_by_table[current_table_function_type][current_table_name]["fact_must_join_on"].update(
                 self.dict_fields[field_f][TomlTableCalculationFieldProperties.FACT_MUST_JOIN_ON.value])
-            all_fields_by_table[current_table_function_type][current_table_name]["no_join_fact"].update(self.dict_fields[
-                field_f][TomlTableCalculationFieldProperties.NO_JOIN_FACT.value])
+            all_fields_by_table[current_table_function_type][current_table_name]["no_join_fact"].update(
+                self.dict_fields[field_f][TomlTableCalculationFieldProperties.NO_JOIN_FACT.value])
 
         # Generate all possible table types
-        for table_type in TomlTableTableTypeFieldPossibleValues:
-            all_fields_by_table[table_type.value] = {}
+        all_fields_by_table = FieldsForQuery()
 
         for field in fields_for_query_structure["select"]:
             current_table_type, current_table = create_table_if_not_exists(field)
@@ -175,11 +175,6 @@ class PreQueryBuilder:
                 all_fields_by_table[current_table_type][current_table]["not_for_select"].add(field)
 
         return all_fields_by_table
-
-    # TODO: посчитать сколько фактовых таблиц. Если много, то делать отдельные СTE
-    # TODO: Посмотреть что с датами. Если есть группировки по датам, то группировать
-    # TODO: Обязательная проверка всех соединений
-    # TODO: Внедрить алгоритм Дейкстры
 
 
 if __name__ == "__main__":

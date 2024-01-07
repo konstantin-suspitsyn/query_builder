@@ -82,3 +82,9 @@ class TomlPossibleFieldKeywordsForTable(enum.Enum):
     TYPE_SELECT = "select"
     TYPE_VALUE = "value"
     TYPE_CALCULATION = "calculation"
+
+
+class FrontendTypeFields(enum.Enum):
+    SELECT = "select"
+    WHERE = "where"
+    CALCULATIONS = "calculations"

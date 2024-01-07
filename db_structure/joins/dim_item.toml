@@ -3,5 +3,3 @@ schema = "public"
 database = "query_builder"
 
 [second_table]
-fact_sales = {how="inner", on="fact_sales.sk_item_id = dim_item.sk_item_id"}
-fact_stock = {how="inner", on="fact_stock.sk_item_id = dim_item.sk_item_id"}
