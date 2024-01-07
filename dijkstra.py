@@ -19,6 +19,9 @@ class DijkstraJoins:
         for table in all_tables:
             self.all_tables.add(table)
 
+        for join_start_table in self.direct_joins:
+            self.best_joins_for_start(join_start_table)
+
     def return_join(self, start_table: str, end_table: str) -> bool | dict:
         if not self.joins.has_join(start_table, end_table):
             self.best_joins_for_start(start_table)
@@ -60,6 +63,13 @@ class DijkstraJoins:
 
         j = self.recursive_joins(join_dict, joins_by_table, set(joins_by_table.keys()), min_node)
 
+        key_list = list(j.keys())
+
+        for key in key_list:
+            if j[key]["steps"] == max_no:
+                del j[key]
+
+        self.joins.all_joins_by_starting_table({start_table: j})
         print(j)
 
     def recursive_joins(self, created_joins: dict, all_joins: dict, all_tables: set, next_node: str | None) -> dict:
