@@ -1,12 +1,16 @@
 from collections import UserDict
 
-from enum_query_builder import TomlTableTableTypeFieldPossibleValues
+from enum_query_builder import TomlTableTableTypeFieldPossibleValues, FrontendTypeFields
 from exceptions_query_builder import UnknownTableType
 
 
 class FieldsForQuery(UserDict):
 
     def __init__(self, dictionary=None):
+
+        if dictionary is None:
+            dictionary = {}
+
         if isinstance(dictionary, dict):
             for key in TomlTableTableTypeFieldPossibleValues.value:
                 if key not in dictionary:
@@ -62,5 +66,30 @@ class FieldsForQuery(UserDict):
 class FieldsFromFrontend(UserDict):
     """
     Type from frontend to other types of query builder
+    dictionary with fields from frontend
+            {
+                "select": [list of fields to select, ...],
+                "calculations": [list of calculations],
+                "where": {field: string with condition,...}
+            }
     """
-    pass
+
+    def __init__(self, dictionary=None):
+
+        if dictionary is None:
+            dictionary = {}
+
+        if isinstance(dictionary, dict):
+            for key in FrontendTypeFields.value:
+                if key not in dictionary:
+                    dictionary[key] = []
+
+        super().__init__(dictionary)
+
+    def get_fields_by_type(self, type_of_fields: str) -> list:
+        possible_field_type_values = [ft.value for ft in FrontendTypeFields]
+        if type_of_fields not in possible_field_type_values:
+            # TODO: raise an error
+            pass
+
+        return self.data[type_of_fields]

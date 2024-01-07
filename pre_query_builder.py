@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from custom_data_types import FieldsForQuery
+from custom_data_types import FieldsForQuery, FieldsFromFrontend
 from enum_query_builder import TomlTableTableTypeFieldPossibleValues, TomlPossibleFieldKeywordsForTable, \
     TomlTableCalculationFieldProperties
 from exceptions_query_builder import UnknownTableFieldProperty
@@ -23,7 +23,7 @@ class PreQueryBuilder:
         self.dict_fields = dict_fields
         self.dict_table = dict_table
 
-    def get_all_fields_for_query_and_sort(self, fields_for_query_structure: dict) -> FieldsForQuery:
+    def get_all_fields_for_query_and_sort(self, fields_for_query_structure: FieldsFromFrontend) -> FieldsForQuery:
         """
         Gets all fields for query and sort them by types od tables, fields and filters
         :param fields_for_query_structure: dictionary with fields from frontend
