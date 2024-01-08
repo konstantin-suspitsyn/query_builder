@@ -17,7 +17,6 @@ one_table_from_front = FieldsFromFrontend({
 
 two_tables_from_front = FieldsFromFrontend({
     "select": [
-        "query_builder.public.fact_stock.value",
         "query_builder.public.dim_item.name",
         "query_builder.public.fact_stock.last_day_of_week_pcs",
         "query_builder.public.fact_sales.value",
@@ -33,7 +32,7 @@ if __name__ == "__main__":
     fields = db.get_all_fields()
     tables = db.get_all_tables()
     pqb = PreQueryBuilder(fields, tables)
-    query_and_sort = pqb.get_all_fields_for_query_and_sort(one_table_from_front)
+    query_and_sort = pqb.get_all_fields_for_query_and_sort(two_tables_from_front)
     print(query_and_sort)
 
     direct_joins_ = db.get_joins_by_table_dictionary()
@@ -42,5 +41,5 @@ if __name__ == "__main__":
     sj = ShortestDistance()
 
     sc = SelectPostgres(tables)
-    print(sc.select_for_one_table(query_and_sort))
+    print(sc.create_query(query_and_sort))
     sc.create_query(query_and_sort)
