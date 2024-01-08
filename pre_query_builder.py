@@ -122,6 +122,9 @@ class PreQueryBuilder:
             :param current_table_name: current table name
             :return:
             """
+
+            # TODO: add tables
+
             current_calculated_field = self.dict_fields[field_f]["calculation"]
 
             list_of_fields = split_to_fields(current_calculated_field, current_table_name)
@@ -134,7 +137,8 @@ class PreQueryBuilder:
             all_fields_by_table[current_table_function_type][current_table_name]["calculations"].add(
                 current_calculated_field)
             all_fields_by_table[current_table_function_type][current_table_name]["where"].add(self.dict_fields[
-                field_f][TomlTableCalculationFieldProperties.WHERE.value])
+                                                                                                  field_f][
+                                                                                                  TomlTableCalculationFieldProperties.WHERE.value])
             all_fields_by_table[current_table_function_type][current_table_name]["fact_must_join_on"].update(
                 self.dict_fields[field_f][TomlTableCalculationFieldProperties.FACT_MUST_JOIN_ON.value])
             all_fields_by_table[current_table_function_type][current_table_name]["no_join_fact"].update(
