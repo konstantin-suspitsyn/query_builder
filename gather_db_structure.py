@@ -223,7 +223,12 @@ class TablesInfoLoader:
                                                                self.__joins_dict[name]["schema"],
                                                                join_field)
 
-                on_generation = self.__joins_dict[name]["second_table"][join_field]["on"]
+                on_generation = {
+                    "first_table_on": self.__joins_dict[name]["second_table"][join_field]["first_table_on"],
+                    "second_table_on": self.__joins_dict[name]["second_table"][join_field]["second_table_on"],
+                    "between_tables": self.__joins_dict[name]["second_table"][join_field]["between_tables"]}
+
+                # TODO: Add non-mandatory joins
 
                 how = self.__joins_dict[name]["second_table"][join_field]["how"]
 

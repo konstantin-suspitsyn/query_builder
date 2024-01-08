@@ -1,5 +1,5 @@
 import re
-from typing import Union, Callable, Tuple, Any, Dict
+from typing import Union
 
 
 def split_to_fields(calculation: str, full_table_name: Union[str | None]) -> list:
@@ -74,3 +74,13 @@ def singleton(class_):
         return instances[class_]
 
     return getinstance
+
+
+def join_on_to_string(on_dictionary: dict) -> str:
+    on = []
+    # TODO: make enum
+    for i in range(len(on_dictionary["first_table_on"])):
+        on.append("{} {} {}".format(on_dictionary["first_table_on"][i], on_dictionary["between_tables"][i],
+                                    on_dictionary["second_table_on"][i]))
+
+    return " AND ".join(on)

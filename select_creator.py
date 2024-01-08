@@ -3,6 +3,7 @@ from typing import Set
 from custom_data_types import FieldsForQuery
 from enum_query_builder import TomlTableTableTypeFieldPossibleValues
 from shortest_joins import ShortestDistance
+from utilities_query_builder import join_on_to_string
 
 
 class SelectCreator:
@@ -90,7 +91,8 @@ class SelectPostgres(SelectCreator):
 
                 join_temp = self.joins.get_join(from_table, end_table)[key]
 
-                query += "\n{} join {} \n on {}".format(join_temp["how"], end_table, join_temp["on"])
+                query += "\n{} join {} \n on {}".format(join_temp["how"], end_table,
+                                                        join_on_to_string(join_temp["on"]))
 
         if len(where) > 0:
             query += "\n where \n"
