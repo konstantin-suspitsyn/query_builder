@@ -38,7 +38,7 @@ class DijkstraJoins:
         join_dict = {}
         joins_by_table = self.direct_joins.copy()
 
-        all_tables = self.all_tables
+        all_tables = self.all_tables.copy()
         all_tables.remove(start_table)
 
         # Step 0. Create all connections
@@ -69,8 +69,10 @@ class DijkstraJoins:
             if j[key]["steps"] == max_no:
                 del j[key]
 
+        for key in j.keys():
+            del j[key]["steps"]
+
         self.joins.all_joins_by_starting_table({start_table: j})
-        print(j)
 
     def recursive_joins(self, created_joins: dict, all_joins: dict, all_tables: set, next_node: str | None) -> dict:
         if next_node is None:

@@ -62,7 +62,8 @@ class PreQueryBuilder:
          structure
         """
 
-        all_fields_by_table = {}
+        # Generate all possible table types
+        all_fields_by_table = FieldsForQuery()
 
         def create_table_structure() -> dict:
             """
@@ -138,9 +139,6 @@ class PreQueryBuilder:
                 self.dict_fields[field_f][TomlTableCalculationFieldProperties.FACT_MUST_JOIN_ON.value])
             all_fields_by_table[current_table_function_type][current_table_name]["no_join_fact"].update(
                 self.dict_fields[field_f][TomlTableCalculationFieldProperties.NO_JOIN_FACT.value])
-
-        # Generate all possible table types
-        all_fields_by_table = FieldsForQuery()
 
         for field in fields_for_query_structure["select"]:
             current_table_type, current_table = create_table_if_not_exists(field)
