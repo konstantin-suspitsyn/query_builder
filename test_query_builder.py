@@ -19,10 +19,11 @@ two_tables_from_front = FieldsFromFrontend({
     "select": [
         "query_builder.public.dim_item.name",
         "query_builder.public.fact_stock.last_day_of_week_pcs",
-        "query_builder.public.fact_sales.value",
+        "query_builder.public.dim_calendar.date",
                ],
     "calculations": [
-        "sum(query_builder.public.fact_stock.value * query_builder.public.dim_item.price)"
+        "sum(query_builder.public.fact_stock.value * query_builder.public.dim_item.price)",
+        "sum(query_builder.public.fact_sales.value)",
     ],
     "where": "query_builder.public.dim_calendar.date = '2023-01-01'"
 })
