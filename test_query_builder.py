@@ -7,15 +7,16 @@ from shortest_joins import ShortestDistance
 
 one_table_from_front = FieldsFromFrontend({
     "select": [
-        "query_builder.public.fact_stock.value",
-        "query_builder.public.dim_item.name"
+        "query_builder.public.fact_stock.first_day_of_week_pcs",
+        "query_builder.public.fact_stock.date",
+        "query_builder.public.dim_item.name",
+
                ],
     "where": "query_builder.public.dim_calendar.date = '2023-01-01'"
 })
 
 two_tables_from_front = FieldsFromFrontend({
     "select": [
-        "query_builder.public.fact_stock.value",
         "query_builder.public.dim_item.name",
         "query_builder.public.fact_stock.last_day_of_week_pcs",
         "query_builder.public.fact_sales.value",
@@ -40,4 +41,5 @@ if __name__ == "__main__":
     sj = ShortestDistance()
 
     sc = SelectPostgres(tables)
-    sc.create_query(one_table_from_front)
+    print(sc.select_for_multiple_fact_tables(query_and_sort))
+    # sc.create_query(query_and_sort)

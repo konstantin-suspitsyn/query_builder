@@ -16,6 +16,8 @@ class FieldsForQuery(UserDict):
                 if key.value not in dictionary:
                     dictionary[key.value] = {}
 
+        print(dictionary)
+
         super().__init__(dictionary)
 
     def get_fact_tables(self) -> set:

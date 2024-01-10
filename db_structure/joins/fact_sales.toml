@@ -3,6 +3,6 @@ schema = "public"
 database = "query_builder"
 
 [second_table]
-dim_store = {how="inner", on="fact_sales.sk_store_id = dim_store.sk_store_id"}
-dim_item = {how="inner", on="fact_sales.sk_item_id = dim_item.sk_item_id"}
-dim_calendar = {how="left", on="fact_sales.date = dim_calendar.date"}
+dim_store = {how="inner", first_table_on=["fact_sales.sk_store_id"], second_table_on=["dim_store.sk_store_id"], between_tables=["="]}
+dim_item = {how="inner", first_table_on=["fact_sales.sk_item_id"], second_table_on=["dim_item.sk_item_id"], between_tables=["="]}
+dim_calendar = {how="left", first_table_on=["fact_sales.date"], second_table_on=["dim_calendar.date"], between_tables=["="]}
