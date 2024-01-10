@@ -34,6 +34,19 @@ class FieldsForQuery(UserDict):
 
         return tables
 
+    def remove_all_fact_tables_except_named(self, table_name: str):
+        fact_tables = self.get_fact_tables()
+        fact_tables.remove(table_name)
+
+        for table in fact_tables:
+            del self.data[TomlTableTableTypeFieldPossibleValues.DATA.value][table]
+
+    def get_all_tables(self) -> set:
+        all_tables = set()
+        all_tables.update(self.get_dimension_tables())
+        all_tables.update(self.get_fact_tables())
+        return all_tables
+
     @staticmethod
     def __create_table_structure() -> dict:
         """

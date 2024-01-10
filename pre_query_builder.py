@@ -183,12 +183,19 @@ class PreQueryBuilder:
 
         for field in fields_for_query_structure["calculations"]:
             tables_in_calculation = get_all_fields_from_calculation(field)
-            if len(tables_in_calculation[TomlTableTableTypeFieldPossibleValues.DATA.value]) > 0:
-                current_table_type, current_table = create_table_if_not_exists(
-                    tables_in_calculation[TomlTableTableTypeFieldPossibleValues.DATA.value][0])
 
-                for non_act_table in tables_in_calculation[TomlTableTableTypeFieldPossibleValues.DIMENSION.value]:
-                    all_fields_by_table[current_table_type][current_table]["not_for_select"].add(non_act_table)
+            table_counter = 0
+
+            for current_fact_field in tables_in_calculation[TomlTableTableTypeFieldPossibleValues.DATA.value]:
+                print(get_table_from_field(current_fact_field))
+                current_table_type, current_table = create_table_if_not_exists(current_fact_field)
+                if table_counter == 0:
+                    all_fields_by_table[current_table_type][current_table]["calculations"].add(field)
+                    table_counter += 1
+
+            for non_act_field in tables_in_calculation[TomlTableTableTypeFieldPossibleValues.DIMENSION.value]:
+                current_table_type, current_table = create_table_if_not_exists(non_act_field)
+                all_fields_by_table[current_table_type][current_table]["not_for_select"].add(non_act_field)
 
         all_fields_by_table["where"] = fields_for_query_structure["where"]
         for field in split_where_string_to_fields(fields_for_query_structure["where"], self.dict_fields):
