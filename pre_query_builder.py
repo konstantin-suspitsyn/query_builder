@@ -5,7 +5,7 @@ from enum_query_builder import TomlTableTableTypeFieldPossibleValues, TomlPossib
     TomlTableCalculationFieldProperties
 from exceptions_query_builder import UnknownTableFieldProperty
 from gather_db_structure import TablesInfoLoader
-from utilities_query_builder import get_table_from_field, split_to_fields, split_where_string_to_fields
+from utilities_query_builder import get_table_from_field, split_to_fields, split_where_string_to_fields, where_to_fields
 
 
 class PreQueryBuilder:
@@ -125,6 +125,8 @@ class PreQueryBuilder:
 
             # TODO: add tables
 
+            join_tables_inside = set()
+
             current_calculated_field = self.dict_fields[field_f]["calculation"]
 
             list_of_fields = split_to_fields(current_calculated_field, current_table_name)
@@ -133,16 +135,36 @@ class PreQueryBuilder:
                 # Add all tables to join later
                 all_fields_by_table[current_table_function_type][current_table_name]["join_tables"].add(
                     get_table_from_field(calculated_field))
+                join_tables_inside.add(get_table_from_field(calculated_field))
 
             all_fields_by_table[current_table_function_type][current_table_name]["calculations"].add(
                 current_calculated_field)
-            all_fields_by_table[current_table_function_type][current_table_name]["where"].add(self.dict_fields[
-                                                                                                  field_f][
-                                                                                                  TomlTableCalculationFieldProperties.WHERE.value])
-            all_fields_by_table[current_table_function_type][current_table_name]["fact_must_join_on"].update(
-                self.dict_fields[field_f][TomlTableCalculationFieldProperties.FACT_MUST_JOIN_ON.value])
-            all_fields_by_table[current_table_function_type][current_table_name]["no_join_fact"].update(
-                self.dict_fields[field_f][TomlTableCalculationFieldProperties.NO_JOIN_FACT.value])
+
+            _where = self.dict_fields[field_f][TomlTableCalculationFieldProperties.WHERE.value]
+
+            all_fields_by_table[current_table_function_type][current_table_name]["where"].add(_where)
+
+            for t in where_to_fields(_where, current_table_name):
+                join_tables_inside.add(get_table_from_field(t))
+
+            _must_join = self.dict_fields[field_f][TomlTableCalculationFieldProperties.FACT_MUST_JOIN_ON.value]
+
+            all_fields_by_table[current_table_function_type][current_table_name]["fact_must_join_on"].update(_must_join)
+
+            for t in _must_join:
+                join_tables_inside.add(get_table_from_field(t))
+
+            _no_join = self.dict_fields[field_f][TomlTableCalculationFieldProperties.NO_JOIN_FACT.value]
+
+            all_fields_by_table[current_table_function_type][current_table_name]["no_join_fact"].update(_no_join)
+            for t in _no_join:
+                join_tables_inside.add(get_table_from_field(t))
+
+            if "" in join_tables_inside:
+                join_tables_inside.remove("")
+
+            all_fields_by_table[current_table_function_type][current_table_name]["join_tables"].update(
+                join_tables_inside)
 
         for field in fields_for_query_structure["select"]:
             current_table_type, current_table = create_table_if_not_exists(field)

@@ -29,6 +29,25 @@ def split_to_fields(calculation: str, full_table_name: Union[str | None]) -> lis
     return needed_fields
 
 
+def where_to_fields(where: str, full_table_name: str | None) -> list:
+    """
+
+    :param where:
+    :param full_table_name:
+    :return:
+    """
+    where = where.lower()
+    for item in ["(", ")", "+", "-", "*", "//", "and", "or", ">", "<", "="]:
+        where = where.replace(item, " ")
+
+    needed_fields = []
+
+    for field in where.split(" "):
+        if (field != "") and (field[:len(full_table_name)] != full_table_name):
+            needed_fields.append(field)
+
+    return needed_fields
+
 def get_table_from_field(long_field: str) -> str:
     """
     Helper function to get table from long_field name
