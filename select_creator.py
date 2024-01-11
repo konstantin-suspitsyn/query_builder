@@ -6,8 +6,6 @@ from shortest_joins import ShortestDistance
 from utilities_query_builder import join_on_to_string, where_to_fields
 
 
-
-
 class SelectCreator:
     CTE = "cte_{}"
     MAIN_JOIN_TABLE = "query_builder.public.dim_calendar"
@@ -127,15 +125,56 @@ class SelectPostgres(SelectCreator):
                 if not self.joins.has_join(fact_table, dimension_table):
                     raise RuntimeError("No join")
 
-        main_query = "select\n"
-        from_query = "from {} \n"
-        join_template = """left join ({}) as  {} 
-            on {}"""
+
+
+        # Main CTE fields
+        dimension_select = set()
+
+        for dimension_table in dimension_tables:
+            set_of_joins: list = []
+            for fact_table in fact_tables:
+                temp_join = self.joins.get_join(fact_table, dimension_table)
+                if len(temp_join.keys()) > 1:
+                    set_of_joins.append(set())
+                else:
+                    set_of_joins.append(set(temp_join[0]["on"]["second_table_on"]))
+
+                same_dimensions: bool = True
+
+                dim_set_no = 0
+                while dim_set_no < len(set_of_joins) - 1:
+                    if len(set_of_joins[dim_set_no]) != len(set_of_joins[dim_set_no + 1]):
+                        same_dimensions = False
+                        break
+
+                    for item in set_of_joins[dim_set_no]:
+                        if item not in set_of_joins[dim_set_no + 1]:
+                            same_dimensions = False
+                            break
+
+                    dim_set_no += 1
+
+                if same_dimensions:
+                    for item in temp_join[0]["on"]["second_table_on"]:
+                        dimension_select.add(item.split(".")[-1])
+                        selected_objects[TomlTableTableTypeFieldPossibleValues.DIMENSION.value][dimension_table][
+                            "select"].add(item)
+
+                if not same_dimensions:
+                    for item in selected_objects[TomlTableTableTypeFieldPossibleValues.DIMENSION.value][
+                            dimension_table]["select"]:
+                        print(item.split(".")[-1])
+                        dimension_select.add(item.split(".")[-1])
+
+            # for item in selected_objects[TomlTableTableTypeFieldPossibleValues.DIMENSION.value][dimension_table][
+            #         "select"]:
+            #     print(item.split(".")[-1])
+            #     dimension_select.add(item.split(".")[-1])
 
         cte_properties = {}
 
         cte_no = 0
-        dimension_select = set()
+
         for fact_table in fact_tables:
             cte_properties[self.CTE.format(cte_no)] = {}
             current_select = copy.deepcopy(selected_objects)
@@ -149,13 +188,6 @@ class SelectPostgres(SelectCreator):
                                                                                               -1], item))
 
             cte_no += 1
-
-        # Main CTE fields
-        for dimension_table in dimension_tables:
-            for item in selected_objects[TomlTableTableTypeFieldPossibleValues.DIMENSION.value][dimension_table][
-                    "select"]:
-                print(item.split(".")[-1])
-                dimension_select.add(item.split(".")[-1])
 
         cte_template = "{} as ({})\n"
 
@@ -186,9 +218,9 @@ class SelectPostgres(SelectCreator):
             the_select += "\nleft join {}\n".format(cte)
             the_select += "ON "
             for dimension in dimension_select:
-                the_select += "{}.{} = {}.{} AND".format(cte, dimension, main_cte_name, dimension)
+                the_select += "{}.{} = {}.{} AND ".format(cte, dimension, main_cte_name, dimension)
 
-            the_select = the_select[:-4]
+            the_select = the_select[:-5]
 
         big_select += the_select
 
