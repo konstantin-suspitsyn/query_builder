@@ -1,0 +1,10 @@
+table = "dim_item"
+schema = "public"
+database = "query_builder"
+
+[fields]
+id = {type = "select", show = "false"}
+sk_item_id = {type = "select", show = "false"}
+name = {type = "select", show = "true", name="Название товара"}
+volume = {type = "select", show = "true", name="Объем товара, м3"}
+price = {type = "select", show = "true", name="Цена товара, руб."}
