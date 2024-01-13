@@ -29,6 +29,10 @@ class StructureGenerator:
         :param joins_folder_link: link to folder with .toml files, containing joins references
         """
 
+        self.__short_tables_dictionary = {}
+        self.__joins_by_table = {}
+        self.__all_fields = {}
+
         toml_tables: dict = gather_data_from_toml_files_into_big_dictionary(
             list_toml_files_in_directory(tables_folder_link), ImportTypes.TABLE.value)
         toml_joins_dict: dict = gather_data_from_toml_files_into_big_dictionary(
@@ -84,7 +88,8 @@ class StructureGenerator:
                 field_human_name = None
 
                 # Check if name doesn't exist, show == False
-                self.__check_name_and_show_field_properties(field, field_name, field_show, file_name, toml_tables)
+                if ("name" not in toml_tables[file_name]["fields"][field]) and (field_show is True):
+                    raise NoHumanNameForShownField(field_name)
 
                 if "name" in toml_tables[file_name]["fields"][field]:
                     field_human_name = toml_tables[file_name]["fields"][field]["name"]
@@ -107,8 +112,8 @@ class StructureGenerator:
                     if "where" in toml_tables[file_name]["calculations"][calculation]:
                         field_where = toml_tables[file_name]["calculations"][calculation]["where"]
 
-                    self.__check_name_and_show_field_properties(calculation, field_human_name, field_show, file_name,
-                                                                toml_tables)
+                    if (field_human_name is None) and (field_show is True):
+                        raise NoHumanNameForShownField(calculation)
 
                     self.__all_fields[calculation] = {
                         "name": field_human_name,
@@ -117,11 +122,6 @@ class StructureGenerator:
                         "where": field_where,
                         "calculation": field_calculation,
                     }
-
-    @staticmethod
-    def __check_name_and_show_field_properties(field, field_name, field_show, file_name, toml_tables) -> None:
-        if ("name" not in toml_tables[file_name]["fields"][field]) and (field_show is True):
-            raise NoHumanNameForShownField(field_name)
 
     def __create_all_joins(self, toml_joins_dict) -> None:
         """
