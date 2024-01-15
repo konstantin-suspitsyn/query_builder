@@ -1,5 +1,5 @@
 from query_builder.utils.enums_and_field_dicts import ImportTypes, FieldType
-from query_builder.utils.exceptions import NoHumanNameForShownField, UnknownFieldType
+from query_builder.utils.exceptions import NoHumanNameForShownField, UnknownFieldTypeForField
 from query_builder.utils.utils import gather_data_from_toml_files_into_big_dictionary, list_toml_files_in_directory, \
     true_false_converter
 
@@ -80,7 +80,7 @@ class StructureGenerator:
                 field_type: str = toml_tables[file_name]["fields"][field]["type"]
 
                 if field_type not in field_types_check:
-                    raise UnknownFieldType(field_name, field_type)
+                    raise UnknownFieldTypeForField(field_name, field_type)
 
                 field_show: bool = true_false_converter(toml_tables[file_name]["fields"][field]["show"])
 
@@ -100,25 +100,17 @@ class StructureGenerator:
                     "type": field_type
                 }
 
-            # Working with predefined calculations
-            if "calculations" in toml_tables[file_name]:
-                for calculation in toml_tables[file_name]["calculations"]:
-                    field_show: bool = true_false_converter(toml_tables[file_name]["calculations"][calculation]["show"])
-                    field_calculation = toml_tables[file_name]["calculations"][calculation]["calculation"]
-                    field_human_name = toml_tables[file_name]["calculations"][calculation]["name"]
+                # Working with predefined calculations
+                if field_type == FieldType.CALCULATION.value:
+
+                    field_calculation = toml_tables[file_name]["fields"][field]["calculation"]
 
                     field_where = None
 
-                    if "where" in toml_tables[file_name]["calculations"][calculation]:
-                        field_where = toml_tables[file_name]["calculations"][calculation]["where"]
+                    if "where" in toml_tables[file_name]["fields"][field]:
+                        field_where = toml_tables[file_name]["fields"][field]["where"]
 
-                    if (field_human_name is None) and (field_show is True):
-                        raise NoHumanNameForShownField(calculation)
-
-                    self.__all_fields[calculation] = {
-                        "name": field_human_name,
-                        "show": field_show,
-                        "type": FieldType.CALCULATION.value,
+                    self.__all_fields[field_name] = {
                         "where": field_where,
                         "calculation": field_calculation,
                     }

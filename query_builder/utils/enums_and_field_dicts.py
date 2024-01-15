@@ -70,3 +70,9 @@ class AllFieldsForImport:
 
     def get_where_dictionary(self):
         return self.__where_fields
+
+
+class FrontendTypeFields(enum.Enum):
+    SELECT = "select"
+    WHERE = "where"
+    CALCULATIONS = "calculations"

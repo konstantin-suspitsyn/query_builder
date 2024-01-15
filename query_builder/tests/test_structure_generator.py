@@ -101,28 +101,32 @@ class TestStructureGenerator(unittest.TestCase):
                                 'query_builder.public.fact_stock.value': {'name': 'Запасы. Кол-во шт.', 'show': True,
                                                                           'type': 'value'},
                                 'query_builder.public.fact_stock.date': {'name': None, 'show': False, 'type': 'select'},
-                                'last_day_of_week_pcs': {'name': 'Запасы на последний день недели, шт', 'show': True,
-                                                         'type': 'calculation',
-                                                         'where': 'query_builder.public.dim_calendar.last_day_of_week '
-                                                                  '= 1',
-                                                         'calculation': 'sum(query_builder.public.fact_stock.value)'},
-                                'first_day_of_week_pcs': {'name': 'Запасы на первый день недели, шт', 'show': True,
-                                                          'type': 'calculation',
-                                                          'where': 'query_builder.public.dim_calendar'
-                                                                   '.first_day_of_week = 1',
-                                                          'calculation': 'sum(query_builder.public.fact_stock.value)'},
-                                'last_day_of_week_rub': {'name': 'Запасы на последний день недели, руб', 'show': True,
-                                                         'type': 'calculation',
-                                                         'where': 'query_builder.public.dim_calendar.last_day_of_week '
-                                                                  '= 1',
-                                                         'calculation': 'sum(query_builder.public.fact_stock.value * '
-                                                                        'query_builder.public.item.price)'},
-                                'first_day_of_week_rub': {'name': 'Запасы на последний день недели, руб', 'show': True,
-                                                          'type': 'calculation',
-                                                          'where': 'query_builder.public.dim_calendar'
-                                                                   '.first_day_of_week = 1',
-                                                          'calculation': 'sum(query_builder.public.fact_stock.value * '
-                                                                         'query_builder.public.item.price)'}}
+                                'query_builder.public.fact_stock.last_day_of_week_pcs': {
+                                    'name': 'Запасы на последний день недели, шт', 'show': True,
+                                    'type': 'calculation',
+                                    'where': 'query_builder.public.dim_calendar.last_day_of_week '
+                                             '= 1',
+                                    'calculation': 'sum(query_builder.public.fact_stock.value)'},
+                                'query_builder.public.fact_stock.first_day_of_week_pcs': {
+                                    'name': 'Запасы на первый день недели, шт', 'show': True,
+                                    'type': 'calculation',
+                                    'where': 'query_builder.public.dim_calendar'
+                                             '.first_day_of_week = 1',
+                                    'calculation': 'sum(query_builder.public.fact_stock.value)'},
+                                'query_builder.public.fact_stock.last_day_of_week_rub': {
+                                    'name': 'Запасы на последний день недели, руб', 'show': True,
+                                    'type': 'calculation',
+                                    'where': 'query_builder.public.dim_calendar.last_day_of_week '
+                                             '= 1',
+                                    'calculation': 'sum(query_builder.public.fact_stock.value * '
+                                                   'query_builder.public.item.price)'},
+                                'query_builder.public.fact_stock.first_day_of_week_rub': {
+                                    'name': 'Запасы на последний день недели, руб', 'show': True,
+                                    'type': 'calculation',
+                                    'where': 'query_builder.public.dim_calendar'
+                                             '.first_day_of_week = 1',
+                                    'calculation': 'sum(query_builder.public.fact_stock.value * '
+                                                   'query_builder.public.item.price)'}}
 
         keys_are_equal: bool = True
         all_fields_keys = set(all_fields.keys())

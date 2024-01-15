@@ -72,3 +72,34 @@ def gather_data_from_toml_files_into_big_dictionary(list_of_files: list,
             result[non_duplicate_key] = temp_toml
 
     return result
+
+
+def get_table_from_field(field_name) -> str:
+    """
+    Get table name from field name
+    :param field_name:
+    :return:
+    """
+    return field_name[:-len(field_name.split(".")[-1]) - 1]
+
+
+def get_field_name_only(field_name) -> str:
+    """
+    Get field name from field name with table
+    :param field_name:
+    :return:
+    """
+    return field_name.split(".")[-1]
+
+
+def get_fields(sql_expression: str) -> set:
+    sql_expression = sql_expression.lower()
+    remove_from_expression = ["sum", "count", "and", "where", ">", "<", "=", "+", "-", "avg", "(", ")", "*"]
+    for item in remove_from_expression:
+        sql_expression = sql_expression.replace(item, " ")
+
+    set_of_fields = set(sql_expression.split(" "))
+    if "" in set_of_fields:
+        set_of_fields.remove("")
+
+    return set_of_fields
