@@ -1,0 +1,5 @@
+first_table = "dim_warehouse"
+schema = "public"
+database = "query_builder"
+
+[second_table]
