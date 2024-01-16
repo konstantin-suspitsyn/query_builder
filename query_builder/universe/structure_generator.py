@@ -148,7 +148,7 @@ class StructureGenerator:
                 self.__joins_by_table[table_name][join_table]["on"]["second_table_on"] = toml_joins_dict[file_name][
                     "second_table"][join_table]["second_table_on"]
 
-    def get_all_tables(self) -> dict:
+    def get_tables(self) -> dict:
         """
         Returns all tables
         :return: {"table_name": "table_type"}

@@ -26,7 +26,7 @@ class TestFrontendBackendConverter(unittest.TestCase):
             "where": ["query_builder.public.dim_calendar.date = '2023-01-01'"]
         })
 
-        front_to_back = FrontendBackendConverter(table_structure.get_fields(), table_structure.get_all_tables())
+        front_to_back = FrontendBackendConverter(table_structure.get_fields(), table_structure.get_tables())
         fields_rebuild = front_to_back.convert_from_frontend_to_backend(two_tables_from_front)
 
         answer = {'data': {'query_builder.public.fact_stock': {'select': set(), 'calculations': {

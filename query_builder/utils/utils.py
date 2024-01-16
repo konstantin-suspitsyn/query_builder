@@ -103,3 +103,19 @@ def get_fields(sql_expression: str) -> set:
         set_of_fields.remove("")
 
     return set_of_fields
+
+
+def singleton(class_):
+    """
+    Decorator for singleton class
+    :param class_:
+    :return:
+    """
+    instances = {}
+
+    def getinstance(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+
+    return getinstance
