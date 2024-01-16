@@ -10,14 +10,14 @@ class FrontendBackendConverter:
     Converts data from frontend to backend for further query creation
     """
 
-    def __init__(self, dict_fields: dict, dict_table: dict) -> None:
+    def __init__(self, all_fields: dict, all_tables: dict) -> None:
         """
         Initialize class
-        :param dict_fields: all fields with properties
-        :param dict_table: dict with table and properties
+        :param all_fields: all fields with properties
+        :param all_tables: dict with table and properties
         """
-        self.dict_fields = dict_fields
-        self.dict_table = dict_table
+        self.all_fields = all_fields
+        self.all_tables = all_tables
 
     def convert_from_frontend_to_backend(self, fields_for_query_structure: FieldsFromFrontend) -> FieldsForQuery:
         """
@@ -43,14 +43,14 @@ class FrontendBackendConverter:
 
                 if frontend_field_type == FrontendTypeFields.SELECT.value:
                     current_table = get_table_from_field(field)
-                    current_table_type = self.dict_table[current_table]
-                    field_type = self.dict_fields[field]
+                    current_table_type = self.all_tables[current_table]
+                    field_type = self.all_fields[field]["type"]
                     if field_type == FieldType.CALCULATION.value:
-                        calculations.add(self.dict_fields[field]["calculation"])
-                        if "where" in self.dict_fields[field]:
-                            where.add(self.dict_fields[field]["where"])
-                        if "join_tables" in self.dict_fields[field]:
-                            join_tables.add(self.dict_fields[field]["join_tables"])
+                        calculations.add(self.all_fields[field]["calculation"])
+                        if "where" in self.all_fields[field]:
+                            where.add(self.all_fields[field]["where"])
+                        if "join_tables" in self.all_fields[field]:
+                            join_tables.add(self.all_fields[field]["join_tables"])
 
                     if field_type in [FieldType.SELECT.value, FieldType.VALUE.value]:
                         select.add(field)
@@ -81,7 +81,7 @@ class FrontendBackendConverter:
                     if len(data_tables) > 1:
                         raise RuntimeError("This was not yet planned")
 
-                    current_table_type = self.dict_table[current_table]
+                    current_table_type = self.all_tables[current_table]
 
                     all_fields_by_table.add_fields_to_table(table_name=current_table,
                                                             table_type=current_table_type,
@@ -107,15 +107,18 @@ class FrontendBackendConverter:
         extracted_fields = get_fields(aggregation_or_where)
 
         for field in extracted_fields:
-            if field not in self.dict_fields:
+            if field not in self.all_fields:
                 continue
 
             table_from_field = get_table_from_field(field)
 
-            if self.dict_table[table_from_field] == TableTypes.DATA.value:
+            if self.all_tables[table_from_field] == TableTypes.DATA.value:
                 data_tables.add(table_from_field)
 
-            if self.dict_table[table_from_field] == TableTypes.DIMENSION.value:
+            if self.all_tables[table_from_field] == TableTypes.DIMENSION.value:
                 dimension_tables.add(table_from_field)
+
+        if (len(data_tables) == 0) and (len(dimension_tables) == 0):
+            raise RuntimeError("Таблицу из поля не получилось получить")
 
         return data_tables, dimension_tables

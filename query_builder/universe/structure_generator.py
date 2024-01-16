@@ -113,6 +113,7 @@ class StructureGenerator:
                     self.__all_fields[field_name] = {
                         "where": field_where,
                         "calculation": field_calculation,
+                        "type": FieldType.CALCULATION.value
                     }
 
     def __create_all_joins(self, toml_joins_dict) -> None:
