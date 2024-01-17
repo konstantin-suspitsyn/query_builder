@@ -1,4 +1,6 @@
-from query_builder.universe.shortest_joins import ShortestDistance
+from copy import deepcopy
+
+from query_builder.universe.possible_joins import AllPossibleJoins
 
 
 class GenerateJoins:
@@ -16,7 +18,7 @@ class GenerateJoins:
         :param all_tables: all tables coming from StructureGenerator.get_tables()
         """
         # Singleton with the shortest joins
-        self.joins: ShortestDistance = ShortestDistance()
+        self.joins: AllPossibleJoins = AllPossibleJoins()
         self.direct_joins = direct_joins
 
         for table in all_tables:
@@ -50,7 +52,7 @@ class GenerateJoins:
         min_node: str | None = None
 
         join_dict = {}
-        joins_by_table = self.direct_joins.copy()
+        joins_by_table = deepcopy(self.direct_joins)
 
         all_tables = self.all_tables.copy()
         all_tables.remove(start_table)

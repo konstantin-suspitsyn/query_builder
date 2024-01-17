@@ -64,3 +64,28 @@ class TestFrontendBackendConverter(unittest.TestCase):
                 for key_type_of_data in answer[key_data_dim][key_table_name].keys():
                     for set_item in answer[key_data_dim][key_table_name][key_type_of_data]:
                         self.assertTrue(set_item in answer[key_data_dim][key_table_name][key_type_of_data])
+
+    def test_convert_from_frontend_to_backend_multi_where(self):
+        table_structure = StructureGenerator(
+            r"./../tests/test_db_structure/test_tables",
+            r"./../tests/test_db_structure/test_joins",
+            r"./../tests/test_db_structure/test_standard_filters",
+        )
+
+        two_tables_from_front = FieldsFromFrontend({
+            "select": [
+                "query_builder.public.dim_item.name",
+                "query_builder.public.fact_stock.last_day_of_week_pcs",
+                "query_builder.public.dim_calendar.date",
+            ],
+            "calculations": [
+                "sum(query_builder.public.fact_stock.value * query_builder.public.dim_item.price)",
+                "sum(query_builder.public.fact_sales.value)",
+            ],
+            "where": ["query_builder.public.dim_calendar.date = '2023-01-01' "
+                      "and query_builder.public.dim_item.id = 123"]
+        })
+
+        front_to_back = FrontendBackendConverter(table_structure.get_fields(), table_structure.get_tables())
+        fields_rebuild = front_to_back.convert_from_frontend_to_backend(two_tables_from_front)
+        print(fields_rebuild)

@@ -2,7 +2,7 @@ from query_builder.utils.utils import singleton
 
 
 @singleton
-class ShortestDistance:
+class AllPossibleJoins:
     __short_distance = {}
 
     def has_join(self, start_table: str, end_table: str) -> bool:
@@ -56,3 +56,10 @@ class ShortestDistance:
         if not self.has_join(start_table, end_table):
             return False
         return self.__short_distance[start_table][end_table]
+
+    def get_all_joins(self) -> dict:
+        """
+        Return all joins that were created
+        :return:
+        """
+        return self.__short_distance
