@@ -126,7 +126,11 @@ class FieldsForQuery(UserDict):
                 if key.value not in dictionary:
                     dictionary[key.value] = {}
 
-        print(dictionary)
+        if FrontendTypeFields.WHERE.value not in dictionary:
+            dictionary[FrontendTypeFields.WHERE.value] = set()
+
+        if FrontendTypeFields.CALCULATIONS.value not in dictionary:
+            dictionary[FrontendTypeFields.CALCULATIONS.value] = set()
 
         super().__init__(dictionary)
 
@@ -210,3 +214,55 @@ class FieldsForQuery(UserDict):
             self.data[table_type][table_name]["calculations"].update(calculations)
         if select is not None:
             self.data[table_type][table_name]["join_tables"].update(join_tables)
+
+    def add_standalone_where(self, where: set) -> None:
+        """
+        Adds standalone where to set
+        :param where:
+        :return:
+        """
+        self.data[FrontendTypeFields.WHERE.value].update(where)
+
+    def add_standalone_calculation(self, calculations: set) -> None:
+        """
+        Adds standalone calculations to set
+        :param calculations:
+        :return:
+        """
+        self.data[FrontendTypeFields.CALCULATIONS.value].update(calculations)
+
+    def add_data_tables_if_not_exist(self, data_tables: set) -> None:
+        """
+
+        :param data_tables: Set of data tables
+        :return:
+        """
+        for data_table in data_tables:
+            self.add_table_if_not_exist(data_table, TableTypes.DATA.value)
+
+    def add_dimension_tables_if_not_exist(self, dimension_tables: set) -> None:
+        """
+
+        :param dimension_tables: Set of dimension tables
+        :return:
+        """
+        for dimension_table in dimension_tables:
+            self.add_table_if_not_exist(dimension_table, TableTypes.DIMENSION.value)
+
+
+class CteFields(UserDict):
+    """
+    Dictionary for CTE
+    Which fields to use for join of main cte and fact_tables CTEs in QueryGenerator class
+    """
+    def add_table_if_not_exists(self, table_name: str) -> None:
+        if table_name not in self.data:
+            self.data[table_name] = set()
+
+    def add_field(self, table_name: str, fields_to_join: str):
+        self.add_table_if_not_exists(table_name)
+        self.data[table_name].add(fields_to_join)
+
+    def update_field(self, table_name: str, fields_to_join: set):
+        self.add_table_if_not_exists(table_name)
+        self.data[table_name].update(fields_to_join)

@@ -103,3 +103,29 @@ def get_fields(sql_expression: str) -> set:
         set_of_fields.remove("")
 
     return set_of_fields
+
+
+def singleton(class_):
+    """
+    Decorator for singleton class
+    :param class_:
+    :return:
+    """
+    instances = {}
+
+    def getinstance(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+
+    return getinstance
+
+
+def join_on_to_string(on_dictionary: dict) -> str:
+    on = []
+    # TODO: make enum
+    for i in range(len(on_dictionary["first_table_on"])):
+        on.append("{} {} {}".format(on_dictionary["first_table_on"][i], on_dictionary["between_tables"][i],
+                                    on_dictionary["second_table_on"][i]))
+
+    return " AND ".join(on)

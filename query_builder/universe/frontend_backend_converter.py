@@ -64,10 +64,25 @@ class FrontendBackendConverter:
 
                 if frontend_field_type in [FrontendTypeFields.CALCULATIONS.value, FrontendTypeFields.WHERE.value]:
                     data_tables, dimension_tables = self.__get_tables(field)
+
+                    all_fields_by_table.add_data_tables_if_not_exist(data_tables)
+                    all_fields_by_table.add_dimension_tables_if_not_exist(dimension_tables)
+
                     if frontend_field_type == FrontendTypeFields.CALCULATIONS.value:
                         calculations.add(field)
                     if frontend_field_type == FrontendTypeFields.WHERE.value:
                         where.add(field)
+
+                    if (len(data_tables) > 1) and (frontend_field_type == FrontendTypeFields.CALCULATIONS.value):
+                        all_fields_by_table.add_standalone_calculation(calculations)
+
+                        continue
+
+                    if ((len(data_tables) + len(dimension_tables) > 1) and
+                            (frontend_field_type == FrontendTypeFields.WHERE.value)):
+                        all_fields_by_table.add_standalone_where(where)
+
+                        continue
 
                     current_table: str = ""
                     # Do not change order of len ifs

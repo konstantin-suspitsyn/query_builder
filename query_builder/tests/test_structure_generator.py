@@ -45,7 +45,7 @@ class TestStructureGenerator(unittest.TestCase):
         )
 
         # Test amount of tables
-        all_tables = sg.get_all_tables()
+        all_tables = sg.get_tables()
 
         number_of_files = len(os.listdir(tables_folder_link))
         number_of_tables = len(all_tables.keys())
