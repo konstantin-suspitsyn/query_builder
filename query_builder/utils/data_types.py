@@ -248,3 +248,21 @@ class FieldsForQuery(UserDict):
         """
         for dimension_table in dimension_tables:
             self.add_table_if_not_exist(dimension_table, TableTypes.DIMENSION.value)
+
+
+class CteFields(UserDict):
+    """
+    Dictionary for CTE
+    Which fields to use for join of main cte and fact_tables CTEs in QueryGenerator class
+    """
+    def add_table_if_not_exists(self, table_name: str) -> None:
+        if table_name not in self.data:
+            self.data[table_name] = set()
+
+    def add_field(self, table_name: str, fields_to_join: str):
+        self.add_table_if_not_exists(table_name)
+        self.data[table_name].add(fields_to_join)
+
+    def update_field(self, table_name: str, fields_to_join: set):
+        self.add_table_if_not_exists(table_name)
+        self.data[table_name].update(fields_to_join)
