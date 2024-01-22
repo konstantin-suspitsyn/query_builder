@@ -10,6 +10,7 @@ from query_builder.utils.utils import join_on_to_string
 class QueryGenerator:
     """
     Generates query
+    Suitable for PostgreSQL
     """
 
     joins: AllPossibleJoins
@@ -21,13 +22,16 @@ class QueryGenerator:
     CALC_FIELD = "{}_calc_{}"
     COMBI = "combi"
 
-    def __init__(self, tables_dict: dict):
+    DIMENSION_SELECTS_K = "dimension_selects"
+    MAIN_CTE = "main_cte"
+    OUT_K = "out"
+    QUERY_K = "query"
+    SELECT_K = "select"
+    CALCULATIONS_K = "calculations"
+    ALL_CTE = "all_cte"
+    WHERE_K = "where"
 
-        self.DIMENSION_SELECTS = "dimension_selects"
-        self.MAIN_CTE = "main_cte"
-        self.OUT_K = "out"
-        self.QUERY_K = "query"
-        self.ALL_CTE = "all_cte"
+    def __init__(self, tables_dict: dict):
 
         # All tables
         self.tables_dict = tables_dict
@@ -79,14 +83,14 @@ class QueryGenerator:
         for key in TableTypes:
             list_of_tables = list(selected_objects[key.value].keys())
             for table in list_of_tables:
-                select.update(selected_objects[key.value][table]["select"])
+                select.update(selected_objects[key.value][table][self.SELECT_K])
                 # TODO: SYNC this with BBBB
                 i: int = 0
-                for c in selected_objects[key.value][table]["calculations"]:
+                for c in selected_objects[key.value][table][self.CALCULATIONS_K]:
                     calculation.add("{} as {}".format(c, self.CALC_FIELD.format(from_table.split(".")[-1],
                                                                                 i)))
                     i += 1
-                where.update(selected_objects[key.value][table]["where"])
+                where.update(selected_objects[key.value][table][self.WHERE_K])
 
         where.update(selected_objects[FrontendTypeFields.WHERE.value])
 
@@ -131,7 +135,7 @@ class QueryGenerator:
 
         # Fast check if all joins exist
         for fact_table in fact_tables:
-            if len(selected_objects[TableTypes.DATA.value][fact_table]["select"]) > 0:
+            if len(selected_objects[TableTypes.DATA.value][fact_table][self.SELECT_K]) > 0:
                 raise RuntimeError("Select on fact join")
 
             for dimension_table in dimension_tables:
@@ -158,9 +162,9 @@ class QueryGenerator:
                 temp_join = self.joins.get_join(fact_table, dimension_table)
                 last_join_table_no: int = max(list(temp_join.keys()))
                 dimension_join_fields[fact_table] = {TableTypes.DIMENSION.value:
-                                                         set(temp_join[last_join_table_no]["on"]["second_table_on"]),
+                                                     set(temp_join[last_join_table_no]["on"]["second_table_on"]),
                                                      TableTypes.DATA.value:
-                                                         set(temp_join[0]["on"]["first_table_on"]),
+                                                     set(temp_join[0]["on"]["first_table_on"]),
                                                      }
 
             same_dimensions: bool = True
@@ -215,28 +219,29 @@ class QueryGenerator:
             current_select.remove_all_fact_tables_except_named(fact_table)
             cte_properties[self.ALL_CTE][current_cte][self.QUERY_K] = self.generate_select_for_one_data_table(
                 current_select)
-            cte_properties[self.ALL_CTE][current_cte]["out"] = set()
+            cte_properties[self.ALL_CTE][current_cte][self.OUT_K] = set()
 
             # Fields to be joined with cte_m
             cte_properties[self.ALL_CTE][current_cte][self.CTE_JOIN] = dimension_select[fact_table]
 
             # TODO: SYNC this with BBBB
             for item in range(len(selected_objects[TableTypes.DATA.value][fact_table][
-                                      "calculations"])):
+                                      self.CALCULATIONS_K])):
                 cte_properties[self.ALL_CTE][current_cte][self.OUT_K].add(self.CALC_FIELD.format(fact_table.split(
                     ".")[-1], item))
 
             cte_no += 1
 
         cte_properties["calculations"] = set()
-        cte_properties[self.DIMENSION_SELECTS] = set()
+        cte_properties[self.DIMENSION_SELECTS_K] = set()
 
         for dimension_table in dimension_tables:
-            cte_properties[self.DIMENSION_SELECTS].update(selected_objects[TableTypes.DIMENSION.value][dimension_table][
-                                                              "select"])
+            cte_properties[self.DIMENSION_SELECTS_K].update(
+                selected_objects[TableTypes.DIMENSION.value][dimension_table][
+                    "select"])
 
         # Build all CTEs
-        query = self.generate_text_query_for_multiple_tables(cte_properties)
+        query = self.__generate_text_query_for_multiple_tables(cte_properties)
 
         return query
 
@@ -311,7 +316,7 @@ class QueryGenerator:
 
         raise RuntimeError("No join")
 
-    def generate_text_query_for_multiple_tables(self, cte_properties: dict) -> str:
+    def __generate_text_query_for_multiple_tables(self, cte_properties: dict) -> str:
         """
         Generates query text for multiple fact tables
         :param cte_properties: prepared for CTE tables dict
@@ -352,7 +357,7 @@ class QueryGenerator:
 
             left_join_cte.append(left_join_template.format(cte, "\n\tAND ".join(and_join)))
 
-        for dimension_field in cte_properties[self.DIMENSION_SELECTS]:
+        for dimension_field in cte_properties[self.DIMENSION_SELECTS_K]:
             dimension_select_list: list[str] = []
             for cte in cte_properties[self.ALL_CTE]:
                 dimension_select_list.append(select_field_template.format(cte, dimension_field.split(".")[-1]))
