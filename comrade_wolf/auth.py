@@ -42,7 +42,6 @@ def register():
     return render_template("auth/register.html")
 
 
-#
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
     if request.method == 'POST':
@@ -81,7 +80,6 @@ def load_logged_in_user():
         user = User.query.filter_by(id=user_id).first()
 
         g.user = user
-
 
 
 @bp.route('/logout')

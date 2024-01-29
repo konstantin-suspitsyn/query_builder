@@ -1,15 +1,27 @@
 {% extends 'base.html' %}
-
-{% block header %}
-  <h1>{% block title %}Register{% endblock %}</h1>
+{% block title %}
+Регистрация
 {% endblock %}
 
 {% block content %}
+<div class="form-surround">
+  <h2 class="center bold">Регистрация</h2>
   <form method="post">
-    <label for="username">Username</label>
-    <input name="username" id="username" required>
-    <label for="password">Password</label>
-    <input type="password" name="password" id="password" required>
-    <input type="submit" value="Register">
+    <div class="mb-3">
+      <label for="username" class="form-label">Имя пользователя</label>
+      <input name="username" id="username" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="email" class="form-label">Электронная почта</label>
+      <input type="email" class="form-control" name="email" id="email" required>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Пароль</label>
+      <input type="password" name="password" id="password" class="form-control" required>
+    </div>
+    <input class="btn btn-primary button-submit-recolor button-position" type="submit" value="Зарегистрироваться">
   </form>
+  <div class="mt-5 mb-3">Если у вас уже есть логин и пароль, <a href="{{ url_for('auth.login') }}">войдите</a></div>
+
+</div>
 {% endblock %}
