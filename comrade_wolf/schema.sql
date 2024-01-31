@@ -5,7 +5,9 @@ DROP TABLE IF EXISTS query_builder.public.activation_code;
 create table query_builder.public."user" (
   username character varying(50) not null, -- Username
   password character varying(256) not null, -- Hashed user password
-  email character varying(256) not null, -- Email
+  email character varying(256) not null
+      constraint user_pk
+            unique, -- Email
   created_at timestamp without time zone not null, -- User created at
   updated_at timestamp without time zone, -- User updated at
   is_active boolean not null,
