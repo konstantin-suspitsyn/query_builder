@@ -1,9 +1,8 @@
 import copy
 
-from enum_query_builder import FrontendTypeFields
 from query_builder.universe.possible_joins import AllPossibleJoins
 from query_builder.utils.data_types import FieldsForQuery, CteFields
-from query_builder.utils.enums_and_field_dicts import TableTypes, FieldType
+from query_builder.utils.enums_and_field_dicts import TableTypes, FieldType, FrontendTypeFields
 from query_builder.utils.utils import join_on_to_string
 
 

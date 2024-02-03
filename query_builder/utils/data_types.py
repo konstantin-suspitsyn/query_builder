@@ -1,7 +1,8 @@
 from collections import UserDict
 
 from query_builder.utils.enums_and_field_dicts import TomlStructure, AllFieldsForImport, FrontendTypeFields, TableTypes
-from query_builder.utils.exceptions import NoMandatoryKeyException, UnknownFieldType, FieldsFromFrontendWrongValue
+from query_builder.utils.exceptions import NoMandatoryKeyException, UnknownFieldType, FieldsFromFrontendWrongValue, \
+    UnknownTableType
 
 
 class TableImport(UserDict):
@@ -187,7 +188,6 @@ class FieldsForQuery(UserDict):
         """
         possible_table_type_values = [tt.value for tt in TableTypes]
         if table_type not in possible_table_type_values:
-            from exceptions_query_builder import UnknownTableType
             UnknownTableType(table_name, table_type)
 
         if table_name not in self.data[table_type]:

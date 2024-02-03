@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}
+Вход на сайт
+{% endblock %}
+
+{% block content %}
+
+<div class="form-surround">
+  <h2 class="center bold">Вход</h2>
+  <form method="post">
+    <div class="mb-3">
+      <label for="email" class="form-label">Электронная почта</label>
+      <input type="email" class="form-control" name="email" id="email" required>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Пароль</label>
+      <input type="password" name="password" id="password" class="form-control" required>
+    </div>
+    <input class="btn btn-primary button-submit-recolor button-position" type="submit" value="Войти">
+  </form>
+  <div class="mt-5">Если у вас ещё нет логина и пароля, <a href="{{ url_for('auth.register') }}">зарегистрируйтесь</a></div>
+  <div class="mb-3">Если вы забыли пароль, <a href="{{ url_for('auth.forgot_password') }}">восстановите</a></div>
+</div>
+
+{% endblock %}

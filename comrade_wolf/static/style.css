@@ -1,0 +1,29 @@
+.form-surround {
+    max-width: 500px;
+    width: 50%;
+    margin: auto;
+    padding: 20px;
+    background-color: ghostwhite;
+    border-radius: 10px;
+}
+
+.button-submit-recolor {
+    background-color: #344563;
+    border-color: #344563;
+    color: white;
+}
+
+.button-position {
+    width: 100%;
+    margin-top: 1em;
+}
+
+.center {
+    width: 100%;
+    text-align: center;
+    margin-top: 0.2em;
+    margin-bottom: 0.5em;
+}
+.bold {
+    font-weight: 600;
+}

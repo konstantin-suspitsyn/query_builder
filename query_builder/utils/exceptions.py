@@ -62,6 +62,13 @@ class FieldsFromFrontendWrongValue(Exception):
     """
     Exception if any value under key of FieldsFromFrontend class is not list
     """
+
     def __init__(self, key: str) -> None:
         message = f"Все поступающие значения внутри словаря должны быть типом list. Проверь {key}"
+        super().__init__(message)
+
+
+class UnknownTableType(Exception):
+    def __init__(self, table_name: str, table_type: str) -> None:
+        message = f"Неизвестный тип таблицы {table_name}: {table_type}"
         super().__init__(message)
