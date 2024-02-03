@@ -40,3 +40,23 @@ comment on column query_builder.public.activation_code.user_id is 'Foreign key t
 alter table query_builder.public.activation_code
     owner to postgres;
 
+
+create table public.forgotten_password
+(
+    id              bigserial
+        constraint forgotten_password_pk
+            primary key,
+    user_id         bigint       not null
+        constraint forgotten_password_user_id_fk
+            references public."user",
+    activation_code varchar(256) not null,
+    is_active       boolean      not null,
+    created_at      timestamp    not null,
+    updated_at      timestamp,
+    expires_at      timestamp    not null
+);
+
+comment on table public.forgotten_password is 'Table with code to change password';
+
+alter table public.forgotten_password
+    owner to postgres;

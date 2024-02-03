@@ -5,60 +5,75 @@ import sqlalchemy
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
+from flask_login import login_user, login_required, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from comrade_wolf.database import init_db, db_session
-from comrade_wolf.models import User, ActivationCode
+from comrade_wolf.models.auth_models import User, ActivationCode, ChangePasswordCode
 from comrade_wolf.utilities.util_enums import FlashType
 from comrade_wolf.utilities.utilities import generate_random_string
+
+SHOULD_ENTER = "Необходимо заполнить {}"
+
+ACTIVATE_USER = "Пользователь создан. Проверьте электронную почту для активации"
+
+USER_NOT_FOUND_OR_PASSWORD_WRONG = "Пользователь не не найден или пароль некорректный"
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
-def check_if_user_exists(email):
+def error_if_user_exists(email: str, username: str) -> str | None:
     """
     Checks if User exists
-    If user not active, code will be send again
-    If user active will return login
+    :param username:
     :param email: User email
     :return:
     """
     user = User.query.filter_by(email=email).first()
+
     if user is None:
-        return
+        user = User.query.filter_by(username=username).first()
+        print(user)
+    else:
+        return "Пользователь с почтой {} уже зарегистрирован".format(email)
 
-    if user.is_active is False:
-        message: str = "Пользователь с email {} уже был создан, но не был активирован".format(email)
-        # TODO: Add send message with code to email
-        flash(message, FlashType.info.value)
+    if user is not None:
+        return "Пользователь с именем {} уже зарегистрирован".format(username)
 
-    if user.is_active is True:
-        message: str = "Пользователь с email {} уже был создан".format(email)
-        return redirect(url_for('auth.login', message=message))
+    return None
 
 
 @bp.route('/register', methods=('GET', 'POST'))
-def register(message: str = None, error: str = None):
-    flashing(error, message)
+def register():
+    """
+    Register user
+    :return:
+    """
 
     if request.method == 'POST':
+
         username = request.form['username']
         password = request.form['password']
         email = request.form["email"]
-        error = None
+
+        # Any possible error
+        error: str | None = None
+
+        error_message = SHOULD_ENTER
 
         init_db()
 
         if not username:
-            error = 'Username is required.'
+            error = error_message.format("имя пользователя")
         elif not password:
-            error = 'Password is required.'
+            error = error_message.format("пароль")
         elif not email:
-            error = 'Email is required.'
-
-        check_if_user_exists(email)
+            error = error_message.format("электронную почту")
+        else:
+            error = error_if_user_exists(email, username)
 
         if error is None:
+
             try:
                 user = User(username=username, password=generate_password_hash(password), email=email)
                 db_session.add(user)
@@ -71,43 +86,58 @@ def register(message: str = None, error: str = None):
                 db_session.flush()
 
                 # TODO: Add send message with code to email
-                print(activation_code)
 
                 db_session.commit()
 
+                return redirect(url_for("auth.login"))
+
             except sqlalchemy.exc.IntegrityError:
                 error = f"User {username} is already registered."
+                flash(error, category=FlashType.warning.value)
+
         else:
-            return redirect(url_for("auth.login"))
+            flash(error, category=FlashType.warning.value)
 
     return render_template("auth/register.html")
 
 
 @bp.route('/login', methods=('GET', 'POST'))
-def login(message: str = None, error: str = None):
-    flashing(error, message)
+def login():
+    """
+    Login user
+    :return:
+    """
 
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
 
+        # Any possible error
+        error: str | None = None
+
+        error_message = "Необходимо заполнить {}"
+
         init_db()
-        error = None
 
-        user = User.query.filter_by(username=username).first()
-        print(user)
+        if not password:
+            error = error_message.format("пароль")
+        elif not email:
+            error = error_message.format("электронную почту")
 
-        if user is None:
-            error = 'Incorrect username.'
-        elif not check_password_hash(user.get_password(), str(password)):
-            error = 'Incorrect password.'
+        init_db()
+
+        user = User.query.filter_by(email=email).first()
+
+        if (user is None) or (not check_password_hash(user.get_password(), str(password))):
+            error = USER_NOT_FOUND_OR_PASSWORD_WRONG
 
         if error is None:
             session.clear()
-            session['user_id'] = user.get_id()
+            # TODO: remember to form
+            login_user(user, remember=True)
             return redirect(url_for('hello'))
 
-        flash(error)
+        flash(error, category=FlashType.warning.value)
 
     return render_template('auth/login.html')
 
@@ -121,62 +151,129 @@ def flashing(error=None, message=None):
 
 @bp.route('/forgot-password', methods=('GET', 'POST'))
 def forgot_password():
+    """
+    Forgot password using email
+    :return:
+    """
+
+    # TODO: Check if code exists for user. Send existing code if not expired if expired, create new
+
     if request.method == 'POST':
-        pass
+
+        email = request.form["email"]
+
+        error: str | None = None
+
+        if error is None:
+            error = SHOULD_ENTER.format("email")
+
+        user: User | None = User.query.filter_by(email=email)
+
+        if user is None and error is not None:
+            error = "Пользователь не найден"
+
+        if error is None:
+            init_db()
+            change_code_string = generate_random_string(256)
+            change_password_code = ChangePasswordCode(activation_code=change_code_string, user_id=user.id)
+
+            db_session.add(change_password_code)
+            db_session.flush()
+
+            # TODO: send email
+
+            db_session.commit()
 
     return render_template('auth/forgot_password.html')
 
 
+@bp.route('/set-password', methods=('GET', 'POST'))
+def set_new_forgotten_password():
+    error: str | None = None
+
+    code = request.args.get("code")
+
+    if code is None:
+        error = "Код восстановления не найден"
+
+    if request.method == 'POST':
+
+        password = request.form["password"]
+
+        if password is None:
+            error = "Введи пароль"
+
+        forgotten_password_code = ChangePasswordCode.query.filter_by(activation_code=code, is_active=True).first()
+
+        if forgotten_password_code is None:
+            error = "Код восстановления не найден"
+
+        if error is None:
+
+            if forgotten_password_code.expiration_date <= datetime.now():
+                error = "Срок годности кода закончился. Запросите новый код"
+
+        init_db()
+        forgotten_password_code.is_active = False
+        forgotten_password_code.updated_at = datetime.now()
+        db_session.add(forgotten_password_code)
+
+        if error is None:
+            user = User.query.filter_by(id=forgotten_password_code.user_id).first()
+            user.password = generate_password_hash(password)
+
+        db_session.commit()
+
+    if error is not None:
+        flash(error, category=FlashType.warning.value)
+
+    return render_template('auth/new_forgotten_password.html')
+
+
 @bp.route('/activate', methods=['GET'])
 def activate_user():
+    """
+    Activate user using code from email
+    :return:
+    """
     code = request.args.get("code")
+
+    current_error: str | None = None
 
     init_db()
 
-    activation_code = ActivationCode.query.filter_by(activation_code=code).first()
-    if activation_code is None:
-        flash("Код активации не найден", FlashType.warning.value)
-        return render_template('auth/login.html')
+    activation_code = ActivationCode.query.filter_by(activation_code=code, is_active=True).first()
+    if activation_code is None or code is None:
+        current_error = "Код активации не найден"
 
-    activation_code.is_active = True
-    activation_code.updated_at = datetime.now()
+    user = None
 
-    user = User.query.filter_by(id=activation_code.user_id).first()
-    user.is_active = True
-    user.updated_at = datetime.now()
+    if activation_code is not None:
+        user = User.query.filter_by(id=activation_code.user_id).first()
 
-    db_session.commit()
+    if current_error is None and user is None:
+        current_error = "Пользователь не найден"
 
-    flash("Пользователь активирован", FlashType.success.value)
+    if current_error is None:
 
-    return render_template('auth/login.html')
+        activation_code.is_active = False
+        activation_code.updated_at = datetime.now()
 
+        user.is_active = True
+        user.updated_at = datetime.now()
 
-@bp.before_app_request
-def load_logged_in_user():
-    user_id = session.get('user_id')
+        db_session.commit()
 
-    if user_id is None:
-        g.user = None
+        flash("Пользователь активирован", FlashType.success.value)
+
     else:
+        flash(current_error, FlashType.warning.value)
 
-        user = User.query.filter_by(id=user_id).first()
-
-        g.user = user
+    return render_template('auth/activate_user.html')
 
 
 @bp.route('/logout')
+@login_required
 def logout():
-    session.clear()
-    return redirect(url_for('index'))
-
-
-def login_required(view):
-    @functools.wraps(view)
-    def wrapped_view(**kwargs):
-        if g.user is None:
-            return redirect(url_for('auth.login'))
-
-        return view(**kwargs)
-
-    return wrapped_view
+    logout_user()
+    return redirect(url_for('hello'))

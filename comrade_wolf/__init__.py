@@ -1,6 +1,7 @@
 import os
 
 from flask import Flask
+from flask_login import LoginManager
 
 
 def create_app(test_config=None):
@@ -30,6 +31,17 @@ def create_app(test_config=None):
 
     from . import database
     database.init_app(app)
+
+    login_manager = LoginManager()
+    login_manager.login_view = 'auth.login'
+    login_manager.init_app(app)
+
+    from comrade_wolf.models.auth_models import User
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        # since the user_id is just the primary key of our user table, use it in the query for the user
+        return User.query.filter_by(id=user_id).first()
 
     from . import auth
     app.register_blueprint(auth.bp)
