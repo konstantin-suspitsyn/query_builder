@@ -1,8 +1,8 @@
 import os
 
-from flask import Flask
 from flask_login import LoginManager
 
+from comrade_wolf.comrade_wolf_flask import ComradeWolfFlask
 from comrade_wolf.engine.builder_engine import create_structure_generator
 
 BASE_PATH = r"./db_structure"
@@ -13,7 +13,7 @@ STANDARD_FIELDS_PATH = os.path.join(BASE_PATH, "standard_filters")
 
 def create_app(test_config=None):
     # create and configure the app
-    app = Flask(__name__, instance_relative_config=True)
+    app = ComradeWolfFlask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
     )
@@ -33,6 +33,8 @@ def create_app(test_config=None):
 
     from . import database
     database.init_app(app)
+
+    create_structure_generator(app, JOINS_PATH, TABLES_PATH, STANDARD_FIELDS_PATH)
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
