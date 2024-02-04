@@ -3,6 +3,13 @@ import os
 from flask import Flask
 from flask_login import LoginManager
 
+from comrade_wolf.engine.builder_engine import create_structure_generator
+
+BASE_PATH = r"./db_structure"
+JOINS_PATH = os.path.join(BASE_PATH, "joins")
+TABLES_PATH = os.path.join(BASE_PATH, "tables")
+STANDARD_FIELDS_PATH = os.path.join(BASE_PATH, "standard_filters")
+
 
 def create_app(test_config=None):
     # create and configure the app
@@ -24,11 +31,6 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # a simple page that says hello
-    @app.route('/')
-    def hello():
-        return 'Hello, World!'
-
     from . import database
     database.init_app(app)
 
@@ -43,7 +45,10 @@ def create_app(test_config=None):
         # since the user_id is just the primary key of our user table, use it in the query for the user
         return User.query.filter_by(id=user_id).first()
 
-    from . import auth
+    from comrade_wolf.blueprints import auth
     app.register_blueprint(auth.bp)
+
+    from comrade_wolf.blueprints import home
+    app.register_blueprint(home.bp)
 
     return app
