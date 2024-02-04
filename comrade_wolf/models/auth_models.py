@@ -75,7 +75,7 @@ class ChangePasswordCode(Base):
     """
     Code to change password
     """
-    __tablename__ = "change_password_code"
+    __tablename__ = "forgotten_password"
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"))
     activation_code = Column(String(256), unique=True)

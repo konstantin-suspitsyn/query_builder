@@ -1,4 +1,3 @@
-import functools
 from datetime import datetime
 
 import sqlalchemy
@@ -164,10 +163,10 @@ def forgot_password():
 
         error: str | None = None
 
-        if error is None:
+        if email is None:
             error = SHOULD_ENTER.format("email")
 
-        user: User | None = User.query.filter_by(email=email)
+        user: User | None = User.query.filter_by(email=email).first()
 
         if user is None and error is not None:
             error = "Пользователь не найден"
@@ -183,6 +182,11 @@ def forgot_password():
             # TODO: send email
 
             db_session.commit()
+
+            flash("Код отправлен вам на электронную почту", category=FlashType.success.value)
+
+        else:
+            flash(error, FlashType.warning.value)
 
     return render_template('auth/forgot_password.html')
 
@@ -210,7 +214,7 @@ def set_new_forgotten_password():
 
         if error is None:
 
-            if forgotten_password_code.expiration_date <= datetime.now():
+            if forgotten_password_code.expires_at <= datetime.now():
                 error = "Срок годности кода закончился. Запросите новый код"
 
         init_db()
@@ -221,8 +225,12 @@ def set_new_forgotten_password():
         if error is None:
             user = User.query.filter_by(id=forgotten_password_code.user_id).first()
             user.password = generate_password_hash(password)
+            db_session.add(user)
 
         db_session.commit()
+
+        if error is None:
+            return redirect(url_for("auth.login"))
 
     if error is not None:
         flash(error, category=FlashType.warning.value)
