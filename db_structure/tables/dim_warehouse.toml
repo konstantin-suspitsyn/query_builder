@@ -6,4 +6,4 @@ table_type = "dimension"
 [fields]
 id = {type = "select", show = "false"}
 sk_warehouse_id = {type = "select", show = "false"}
-address = {type = "select", show = "true", name="Адрес склада"}
+address = {type = "select", show = "true", name="Адрес склада", show_group="Склад"}

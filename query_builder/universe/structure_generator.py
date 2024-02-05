@@ -83,6 +83,9 @@ class StructureGenerator:
                     raise UnknownFieldTypeForField(field_name, field_type)
 
                 field_show: bool = true_false_converter(toml_tables[file_name]["fields"][field]["show"])
+                show_group: str | None = None
+                if "show_group" in toml_tables[file_name]["fields"][field]:
+                    show_group = toml_tables[file_name]["fields"][field]["show_group"]
 
                 # There is possibility than Human-name does not exist
                 field_human_name = None
@@ -97,7 +100,8 @@ class StructureGenerator:
                 self.__all_fields[field_name] = {
                     "name": field_human_name,
                     "show": field_show,
-                    "type": field_type
+                    "type": field_type,
+                    "show_group": show_group
                 }
 
                 # Working with predefined calculations
@@ -110,11 +114,9 @@ class StructureGenerator:
                     if "where" in toml_tables[file_name]["fields"][field]:
                         field_where = toml_tables[file_name]["fields"][field]["where"]
 
-                    self.__all_fields[field_name] = {
-                        "where": field_where,
-                        "calculation": field_calculation,
-                        "type": FieldType.CALCULATION.value
-                    }
+                    self.__all_fields[field_name]["where"] = field_where
+                    self.__all_fields[field_name]["calculation"] = field_calculation
+                    self.__all_fields[field_name]["type"] = FieldType.CALCULATION.value
 
     def __create_all_joins(self, toml_joins_dict) -> None:
         """

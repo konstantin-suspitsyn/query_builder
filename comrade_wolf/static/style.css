@@ -27,3 +27,12 @@
 .bold {
     font-weight: 600;
 }
+
+.height-35 {
+    min-height: 35%;
+}
+
+.c-darker {
+    background-color: ghostwhite;
+    border: 1px solid darkgray;
+}

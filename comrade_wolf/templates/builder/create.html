@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}
+Создание запроса
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-3" id="all-fields">
+            <p><b>Поля</b></p>
+            {% for key_head, value_iter in front_fields.items() %}
+            <p><b>{{key_head}}</b></p>
+
+            {% for key, value in value_iter.items() %}
+            <button type="button" class="btn btn-sm mb-1 text-left {% if value['type']=='select' %}btn-primary
+    {% endif %}{% if (value['type']=='calculation') or (value['type']=='value') %}btn-info
+    {% endif %}" value="{{value['field']}}">{% if value['type']=='select' %}♦
+    {% endif %}{% if (value['type']=='calculation') or (value['type']=='value') %}∑
+    {% endif %}{{key}}
+            </button>
+            <br/>
+            {% endfor %}
+            {% endfor %}
+        </div>
+        <div class="col container-fluid">
+            <p><b>Выбранные поля</b></p>
+            <div class="height-35 c-darker" id="select-field">
+
+            </div>
+            <p><b>Where</b></p>
+            <div class="height-35 c-darker">
+
+            </div>
+        </div>
+    </div>
+
+</div>
+<script type="text/javascript" src="{{ url_for('static', filename='move_query_items.js') }}"></script>
+{% endblock %}

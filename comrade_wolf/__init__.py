@@ -47,10 +47,9 @@ def create_app(test_config=None):
         # since the user_id is just the primary key of our user table, use it in the query for the user
         return User.query.filter_by(id=user_id).first()
 
-    from comrade_wolf.blueprints import auth
+    from comrade_wolf.blueprints import auth, home, builder
     app.register_blueprint(auth.bp)
-
-    from comrade_wolf.blueprints import home
     app.register_blueprint(home.bp)
+    app.register_blueprint(builder.bp)
 
     return app
