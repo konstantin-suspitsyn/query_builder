@@ -24,7 +24,7 @@ addEventListener("dblclick", (event) => {
 
     console.log(element.outerHTML)
 
-    selectWindow.innerHTML += "<div class='mr-1'>" + element.outerHTML + "</div>"
+    selectWindow.innerHTML += "<span class='mr-1'>" + element.outerHTML + "</span>"
 
 });
 

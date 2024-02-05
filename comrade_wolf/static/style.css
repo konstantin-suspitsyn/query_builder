@@ -36,3 +36,8 @@
     background-color: ghostwhite;
     border: 1px solid darkgray;
 }
+
+.mr-1 {
+    margin-right: 1em;
+    height: auto;
+}
