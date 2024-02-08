@@ -134,7 +134,7 @@ def login():
             session.clear()
             # TODO: remember to form
             login_user(user, remember=True)
-            return redirect(url_for('hello'))
+            return redirect(url_for('home.home_page'))
 
         flash(error, category=FlashType.warning.value)
 

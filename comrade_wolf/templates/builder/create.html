@@ -24,6 +24,10 @@
         </div>
         <div class="col container-fluid">
             <p><b>Выбранные поля</b></p>
+            <div id="control-over-selected-fields" class="mb-1 text-right">
+                <button type="button" class="btn btn-outline-info btn-sm mr-1 control" id="aggregate-field" onclick="addDropdown()" disabled>Вычисление поля</button>
+                <button type="button" class="btn btn-outline-danger btn-sm mr-1 control" id="delete-field" onclick="deleteSelected()"  disabled>Удалить</button>
+            </div>
             <div class="height-35 c-darker" id="select-field">
 
             </div>
