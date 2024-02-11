@@ -8,18 +8,26 @@
     <div class="row">
         <div class="col-sm-3" id="all-fields">
             <p><b>Поля</b></p>
+
+            <button type="button" class="btn btn-light btn-sm" id="to-select" onclick="changeAddition()" disabled>select</button>
+            <button type="button" class="btn btn-outline-dark btn-sm" id="to-where" onclick="changeAddition()">where</button>
+
             {% for key_head, value_iter in front_fields.items() %}
             <p><b>{{key_head}}</b></p>
 
-            {% for key, value in value_iter.items() %}
-            <button type="button" class="btn btn-sm mb-1 text-left {% if value['type']=='select' %}btn-primary
-    {% endif %}{% if (value['type']=='calculation') or (value['type']=='value') %}btn-info
-    {% endif %}" value="{{value['field']}}">{% if value['type']=='select' %}♦
-    {% endif %}{% if (value['type']=='calculation') or (value['type']=='value') %}∑
-    {% endif %}{{key}}
-            </button>
-            <br/>
-            {% endfor %}
+                {% for key, value in value_iter.items() %}
+                    <button type="button" class="btn btn-sm mb-1 text-left {{value['type']}}
+                    {% if value['type']=='select' %}btn-primary{% endif %}
+                    {% if (value['type']=='calculation') %}btn-info{% endif %}
+                    {% if (value['type']=='value') %}btn-warning{% endif %}"
+                            value="{{value['field']}}">
+                        {% if value['type']=='select' %}•{% endif %}
+                        {% if (value['type']=='value') %}?{% endif %}
+                        {% if (value['type']=='calculation')%}∑{% endif %}
+                        {{key}}
+                    </button>
+                    <br/>
+                {% endfor %}
             {% endfor %}
         </div>
         <div class="col container-fluid">
@@ -32,7 +40,13 @@
 
             </div>
             <p><b>Where</b></p>
-            <div class="height-35 c-darker">
+            <div id="control-over-where-fields" class="mb-1 text-right">
+                <button type="button" class="btn btn-outline-info btn-sm mr-1 control" id="or" onclick="addOr()">ИЛИ</button>
+                <button type="button" class="btn btn-outline-info btn-sm mr-1 control" id="and" onclick="addAnd()">И</button>
+                <button type="button" class="btn btn-outline-danger btn-sm mr-1 control" id="delete-field-where" onclick="deleteField()"  disabled>Удалить поле</button>
+                <button type="button" class="btn btn-outline-danger btn-sm mr-1 control" id="delete-or-and" onclick="deleteOrAnd()"  disabled>Удалить И/Или</button>
+            </div>
+            <div class="height-35 c-darker" id="where-field">
 
             </div>
         </div>
