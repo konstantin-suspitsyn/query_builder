@@ -101,13 +101,10 @@ addEventListener("dblclick", (event) => {
         }
 
         if ((whereBlock.childElementCount > 0) && (currentAndOrOr === null)) {
-            let alreadyInWhere = whereBlock.getElementsByTagName("button")[0].cloneNode(true);
-            whereBlock.getElementsByTagName("button")[0].remove();
-            addAnd();
+
+            insertWrapper(whereBlock, andDiv);
             currentAndOrOr = document.getElementById("selected-or-and");
-            currentAndOrOr.appendChild(alreadyInWhere);
-            currentAndOrOr.appendChild(elementInSelect);
-            return;
+
         }
 
         if (currentAndOrOr != null) {
@@ -233,14 +230,31 @@ function changeAddition() {
     }
 }
 
+function insertWrapper(boxElement, divToAdd) {
+    let alreadyInWhere = boxElement.getElementsByTagName("button")[0].cloneNode(true);
+    boxElement.getElementsByTagName("button")[0].remove();
+
+    boxElement.innerHTML += divToAdd;
+
+    let currentAndOrOr = document.getElementById("selected-or-and");
+    currentAndOrOr.appendChild(alreadyInWhere);
+
+}
+
 function addAndOrOr(divToAdd) {
 
     enableButton("delete-or-and", false);
 
     let boxElement = document.getElementById(whereBoxId);
 
-    if (boxElement.childElementCount === 0) {
+    let andOrCount = boxElement.getElementsByClassName("or").length + boxElement.getElementsByClassName("and").length
 
+    if ((boxElement.childElementCount === 0) || (andOrCount === 0)) {
+
+            if (boxElement.childElementCount > 0) {
+                insertWrapper(boxElement, divToAdd);
+                return;
+            }
         boxElement.innerHTML += divToAdd;
         return;
     }
@@ -336,5 +350,64 @@ function addId(currentElement, idName) {
         anyElement.removeAttribute("id");
     }
     currentElement.setAttribute("id", idName);
+
+}
+
+function generateFieldsAndWhere() {
+    generateWhereCondition();
+}
+
+function buttonPrint(element) {
+    let dropdown = element.getElementsByTagName("select")[0];
+    let inputValues = []
+
+    let inputs = element.getElementsByTagName("input");
+
+    console.log(dropdown.value);
+    console.log(inputs);
+
+    for (let i = 0; i < inputs.length; i++) {
+        inputValues.push(inputs[i].value);
+    }
+
+    console.log(inputValues);
+
+
+
+    return element.value + " " + dropdown.value + " " + inputValues.join(" and ");
+}
+
+function generateStringOfOrOrAnd(element, classListElement) {
+    let allInners = [];
+
+    let children = element.children;
+
+    for (let i=0; i < children.length; i++) {
+
+        if (children[i].tagName === "BUTTON") {
+            allInners.push(buttonPrint(children[i]))
+        }
+
+        if (children[i].tagName === "DIV") {
+            allInners.push(generateStringOfOrOrAnd(children[i], children[i].classList[0]));
+        }
+    }
+
+    return "(" +  allInners.join( " " + classListElement + " ") + ")";
+}
+
+function generateWhereCondition() {
+
+    let element = document.getElementById("where-field").children[0];
+
+    if (element.tagName === "BUTTON") {
+        console.log(buttonPrint(element));
+    }
+
+    if (element.tagName === "DIV") {
+        console.log(generateStringOfOrOrAnd(element, element.classList[0]));
+    }
+
+
 
 }
