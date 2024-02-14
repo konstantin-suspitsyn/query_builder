@@ -354,30 +354,66 @@ function addId(currentElement, idName) {
 }
 
 function generateFieldsAndWhere() {
-    generateWhereCondition();
+
+    let select = generateSelect();
+    select.set("where", generateWhereCondition())
+
+    const json = JSON.stringify(select, replacer);
+
+    console.log(select);
+    console.log(json);
+
+    let request = new XMLHttpRequest();
+    request.open('POST', "http://127.0.0.1:5000/builder/create");
+    request.setRequestHeader("Content-Type", "application/json");
+    request.send(json);
+
+}
+
+function replacer(key, value) {
+  if(value instanceof Map) {
+    return {
+      value: Array.from(value.entries()), // or with spread: value: [...value]
+    };
+  } else {
+    return value;
+  }
 }
 
 function buttonPrint(element) {
+    /**
+     * Generates condition for button
+     * @type {Map<any, any>}
+     */
+
+    let where = new Map();
+    let whereConditions = new Map();
+
     let dropdown = element.getElementsByTagName("select")[0];
     let inputValues = []
 
     let inputs = element.getElementsByTagName("input");
 
-    console.log(dropdown.value);
-    console.log(inputs);
-
     for (let i = 0; i < inputs.length; i++) {
         inputValues.push(inputs[i].value);
     }
 
-    console.log(inputValues);
+    whereConditions.set("operator", dropdown.value);
+    whereConditions.set("condition", inputValues);
 
+    where.set(element.value, whereConditions);
 
-
-    return element.value + " " + dropdown.value + " " + inputValues.join(" and ");
+    return where;
 }
 
 function generateStringOfOrOrAnd(element, classListElement) {
+    /**
+     * Generates map for every and and or inside where box
+     * @type {Map<any, any>}
+     */
+
+    let where = new Map();
+
     let allInners = [];
 
     let children = element.children;
@@ -393,21 +429,79 @@ function generateStringOfOrOrAnd(element, classListElement) {
         }
     }
 
-    return "(" +  allInners.join( " " + classListElement + " ") + ")";
+    where.set(classListElement, allInners);
+
+    return where;
 }
 
 function generateWhereCondition() {
+    /**
+     * Generates map from where field
+     * @type {Map<any, any>}
+     */
+
+    let where = new Map();
 
     let element = document.getElementById("where-field").children[0];
 
+    if (element === undefined) {
+        console.log("Here I am");
+        return where;
+    }
+
     if (element.tagName === "BUTTON") {
-        console.log(buttonPrint(element));
+        where = buttonPrint(element);
     }
 
     if (element.tagName === "DIV") {
-        console.log(generateStringOfOrOrAnd(element, element.classList[0]));
+       where = generateStringOfOrOrAnd(element, element.classList[0]);
     }
 
-
+    return where;
 
 }
+
+function generateSelect() {
+    let selectedFields = new Map();
+    selectedFields.set("select", []);
+    selectedFields.set("calculation", []);
+
+    let selectBox = document.getElementById("select-field").children;
+
+    for (let i=0; i < selectBox.length; i++) {
+
+        if (selectBox[i].classList.contains("calculation")) {
+            selectedFields.get("calculation").push(selectCalculatedButton(selectBox[i], true));
+        }
+
+        if (selectBox[i].classList.contains("value") || selectBox[i].classList.contains("select")) {
+
+            console.log("select: ", selectBox[i].getElementsByTagName("select"));
+
+            if (selectBox[i].getElementsByTagName("select").length === 0) {
+                selectedFields.get("select").push(selectBox[i].value);
+            } else {
+                selectedFields.get("calculation").push(selectCalculatedButton(selectBox[i], false));
+            }
+        }
+
+    }
+    return selectedFields;
+
+}
+
+function selectCalculatedButton(selectButton, isPreCalculated) {
+
+    let buttonInfo = new Map();
+
+    let calcType = "PREDEFINED";
+
+    if (isPreCalculated === false) {
+        let select = selectButton.getElementsByTagName("select")[0];
+        calcType = select.value;
+    }
+
+    buttonInfo.set(selectButton.value, calcType);
+    return buttonInfo;
+}
+

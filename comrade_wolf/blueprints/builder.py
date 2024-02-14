@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, render_template
+from flask import Blueprint, current_app, render_template, request
 
 bp = Blueprint('builder', __name__, url_prefix='/builder')
 
@@ -10,6 +10,10 @@ def create():
     front_fields = __generate_front_fields(fields)
 
     print(front_fields)
+
+    if request.method == 'POST':
+        print("AAAA")
+        print(request.get_json())
 
     return render_template("builder/create.html", front_fields=front_fields)
 
