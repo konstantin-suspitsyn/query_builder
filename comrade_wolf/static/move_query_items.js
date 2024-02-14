@@ -358,7 +358,7 @@ function generateFieldsAndWhere() {
     let select = generateSelect();
     select.set("where", generateWhereCondition())
 
-    const json = JSON.stringify(select, replacer);
+    const json = JSON.stringify(mapToObject(select), replacer);
 
     console.log(select);
     console.log(json);
@@ -370,15 +370,39 @@ function generateFieldsAndWhere() {
 
 }
 
-function replacer(key, value) {
-  if(value instanceof Map) {
-    return {
-      value: Array.from(value.entries()), // or with spread: value: [...value]
-    };
-  } else {
-    return value;
-  }
+function replacer(name, val) {
+    //console.log('replacer name=' + name + ' value ' + val);
+    if (val instanceof Map){
+        // Convert Map to Object
+        return mapToObject(val);
+    } else {
+        return val; // return as is
+    }
 }
+
+function myJsonStringify(obj){
+    let rtn;
+    if (obj instanceof Map) {
+        rtn = JSON.stringify(mapToObject(obj), replacer, 4);
+    } else {
+        rtn = JSON.stringify(obj, replacer, 4);
+    }
+    return rtn;
+}
+
+function mapToObject(aMap) {
+    let obj = Object.create(null);
+    for (let [k,v] of aMap) {
+        // We don’t escape the key '__proto__' which can cause problems on older engines
+        if (v instanceof Map) {
+            obj[k.toString()] = mapToObject(v); // handle Maps that have Maps as values
+        } else {
+            obj[k.toString()] = v;              // calling toString handles case where map key is not a string JSON requires key to be a string
+        }
+    }
+    return obj;
+}
+
 
 function buttonPrint(element) {
     /**
