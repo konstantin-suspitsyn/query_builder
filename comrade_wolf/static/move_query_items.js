@@ -361,7 +361,7 @@ function generateFieldsAndWhere() {
     const json = JSON.stringify(mapToObject(select), replacer);
 
     let request = new XMLHttpRequest();
-    request.open('POST', "http://127.0.0.1:5000/builder/create");
+    request.open('POST', window.location.href);
     request.setRequestHeader("Content-Type", "application/json");
     request.send(json);
 
