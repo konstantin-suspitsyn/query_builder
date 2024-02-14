@@ -360,9 +360,6 @@ function generateFieldsAndWhere() {
 
     const json = JSON.stringify(mapToObject(select), replacer);
 
-    console.log(select);
-    console.log(json);
-
     let request = new XMLHttpRequest();
     request.open('POST', "http://127.0.0.1:5000/builder/create");
     request.setRequestHeader("Content-Type", "application/json");
@@ -469,7 +466,6 @@ function generateWhereCondition() {
     let element = document.getElementById("where-field").children[0];
 
     if (element === undefined) {
-        console.log("Here I am");
         return where;
     }
 
@@ -499,8 +495,6 @@ function generateSelect() {
         }
 
         if (selectBox[i].classList.contains("value") || selectBox[i].classList.contains("select")) {
-
-            console.log("select: ", selectBox[i].getElementsByTagName("select"));
 
             if (selectBox[i].getElementsByTagName("select").length === 0) {
                 selectedFields.get("select").push(selectBox[i].value);
