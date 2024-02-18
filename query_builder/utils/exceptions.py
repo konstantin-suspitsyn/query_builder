@@ -72,3 +72,12 @@ class UnknownTableType(Exception):
     def __init__(self, table_name: str, table_type: str) -> None:
         message = f"Неизвестный тип таблицы {table_name}: {table_type}"
         super().__init__(message)
+
+
+class UnknownFrontFieldType(Exception):
+    """
+    Exception if front field type is not in FrontFieldTypes(enum.Enum)
+    """
+    def __init__(self, field_name: str, front_field_type: str) -> None:
+        message = f"Неизвестный тип поля для front-end. Поле: {field_name}, тип поля {front_field_type}"
+        super().__init__(message)

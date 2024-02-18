@@ -19,8 +19,10 @@
                     <button type="button" class="btn btn-sm mb-1 text-left {{value['type']}}
                     {% if value['type']=='select' %}btn-primary{% endif %}
                     {% if (value['type']=='calculation') %}btn-info{% endif %}
-                    {% if (value['type']=='value') %}btn-warning{% endif %}"
-                            value="{{value['field']}}">
+                    {% if (value['type']=='value') %}btn-warning{% endif %}
+                    {{ value['front_field_type'] }}"
+                            value="{{ value['field']}}"
+                    onclick="includeIntoQuery(event)">
                         {% if value['type']=='select' %}•{% endif %}
                         {% if (value['type']=='value') %}?{% endif %}
                         {% if (value['type']=='calculation')%}∑{% endif %}

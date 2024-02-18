@@ -1,5 +1,5 @@
-from query_builder.utils.enums_and_field_dicts import ImportTypes, FieldType
-from query_builder.utils.exceptions import NoHumanNameForShownField, UnknownFieldTypeForField
+from query_builder.utils.enums_and_field_dicts import ImportTypes, FieldType, FrontFieldTypes
+from query_builder.utils.exceptions import NoHumanNameForShownField, UnknownFieldTypeForField, UnknownFrontFieldType
 from query_builder.utils.utils import gather_data_from_toml_files_into_big_dictionary, list_toml_files_in_directory, \
     true_false_converter
 
@@ -66,6 +66,7 @@ class StructureGenerator:
         """
 
         field_types_check = [f.value for f in FieldType]
+        front_field_list_check = [f.value for f in FrontFieldTypes]
 
         for file_name in toml_tables:
 
@@ -83,12 +84,21 @@ class StructureGenerator:
                     raise UnknownFieldTypeForField(field_name, field_type)
 
                 field_show: bool = true_false_converter(toml_tables[file_name]["fields"][field]["show"])
+
+                front_field_type: str | None = None
+
+                if field_show:
+                    # Check if front_field type exists and in enum
+                    front_field_type = toml_tables[file_name]["fields"][field]["front_type"]
+                    if front_field_type not in front_field_list_check:
+                        raise UnknownFrontFieldType(field_name, front_field_type)
+
                 show_group: str | None = None
                 if "show_group" in toml_tables[file_name]["fields"][field]:
                     show_group = toml_tables[file_name]["fields"][field]["show_group"]
 
                 # There is possibility than Human-name does not exist
-                field_human_name = None
+                field_human_name: str | None = None
 
                 # Check if name doesn't exist, show == False
                 if ("name" not in toml_tables[file_name]["fields"][field]) and (field_show is True):
@@ -103,6 +113,9 @@ class StructureGenerator:
                     "type": field_type,
                     "show_group": show_group
                 }
+
+                if field_show:
+                    self.__all_fields[field_name]["front_field_type"] = front_field_type
 
                 # Working with predefined calculations
                 if field_type == FieldType.CALCULATION.value:

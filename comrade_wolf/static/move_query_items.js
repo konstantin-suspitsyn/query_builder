@@ -1,5 +1,9 @@
-let select = {};
-let where = {};
+let frontInputTypes = new Map();
+frontInputTypes.set("date", "date");
+frontInputTypes.set("number", "text");
+frontInputTypes.set("datetime", "datetime-local");
+frontInputTypes.set("boolean", "text");
+frontInputTypes.set("text", "text");
 
 const SELECT = "select";
 const WHERE = "where";
@@ -35,9 +39,9 @@ const whereOptions = "<select onchange=\"insertInput(event)\" name=\"select_opti
     "  <option value=\"not in\">Не в списке</option>\n" +
     "</select>"
 
-const lonelyInput = "<input type=\"text\" required minlength=\"4\" maxlength=\"8\" size=\"10\" />"
-const betweenInput = "<input type=\"text\" required minlength=\"4\" maxlength=\"8\" size=\"10\" /> И  " +
-    "<input type=\"text\" required minlength=\"4\" maxlength=\"8\" size=\"10\" />"
+const lonelyInput = "<input type=\"%TYPE%\" required minlength=\"4\" maxlength=\"8\" size=\"10\" />"
+const betweenInput = "<input type=\"%TYPE%\" required minlength=\"4\" maxlength=\"8\" size=\"10\" /> И  " +
+    "<input type=\"%TYPE%\" required minlength=\"4\" maxlength=\"8\" size=\"10\" />"
 
 const selectOptionsMap = new Map([
   ["select", selectOptions],
@@ -55,7 +59,7 @@ const selectBoxId = "select-field";
 
 
 
-addEventListener("dblclick", (event) => {
+function includeIntoQuery(event) {
     /**
      * Move button to selected field
      */
@@ -83,6 +87,11 @@ addEventListener("dblclick", (event) => {
     }
 
     if (whatToAdd === WHERE) {
+
+        if (elementInSelect.classList.contains("calculation")) {
+            window.alert("Поле является вычисляемым. Его нельзя использовать во where");
+            return;
+        }
 
         elementInSelect.innerHTML += whereOptions;
         elementInSelect.innerHTML += "<span class='placeholder'></span>";
@@ -113,7 +122,7 @@ addEventListener("dblclick", (event) => {
 
     }
 
-});
+}
 
 addEventListener("click", (event) => {
 
@@ -126,6 +135,10 @@ addEventListener("click", (event) => {
     }
 
     disableButtons()
+
+    if (clickedElement === undefined || clickedElement === null) {
+        return;
+    }
 
     if (clickedElement.classList.contains("selected-border")) {
         clickedElement.classList.remove("selected-border");
@@ -288,6 +301,7 @@ function deleteOrAnd() {
     let selectedAndOr = document.getElementById(idSelectedOrAnd);
     selectedAndOr.remove();
     enableButton("delete-or-and", true);
+    enableButton("delete-field-where", true);
 }
 
 function removeIdFromAnyElement(idTagName) {
@@ -324,12 +338,21 @@ function insertInput(event) {
     let currentElement = event.target;
     let parentButton = currentElement.parentNode;
     let spanToInsert = parentButton.getElementsByClassName("placeholder")[0];
+
+    let inputType = new Map();
+
+    for (let [key, value] of frontInputTypes) {
+        if (parentButton.classList.contains(key)) {
+            inputType.set("%TYPE%", value);
+        }
+    }
+
     spanToInsert.innerHTML = "";
 
     if (currentElement.value === "between") {
-        spanToInsert.innerHTML += betweenInput;
+        spanToInsert.innerHTML += betweenInput.replace("%TYPE%", inputType.get("%TYPE%")).replace("%TYPE%", inputType.get("%TYPE%"));
     } else {
-        spanToInsert.innerHTML += lonelyInput;
+        spanToInsert.innerHTML += lonelyInput.replace("%TYPE%", inputType.get("%TYPE%"));
     }
 
 
@@ -353,17 +376,73 @@ function addId(currentElement, idName) {
 
 }
 
-function generateFieldsAndWhere() {
+function isWhereOk(where) {
+    /**
+     * Checks if where is fine
+     * All inputs exist
+     * All inputs are filled in
+     */
 
-    let select = generateSelect();
-    select.set("where", generateWhereCondition())
+    if (where.size === 0) {
+        return false;
+    }
 
+    for (let value of where.values()) {
+
+        if (value instanceof Array) {
+
+            for (let i = 0; i < value.length; i++) {
+                let answer = isWhereOk(value[i]);
+                if (answer === false) {
+                    return false;
+                }
+            }
+        }
+
+        if (value instanceof Map) {
+            if (value.has("condition")) {
+                let condition = value.get("condition");
+                if (condition.length === 0) {
+                    return false;
+                }
+                for (let i = 0; i < condition.length; i++) {
+                    if (condition[i] === "") {
+                        return false;
+                    }
+                }
+            }
+
+        }
+    }
+
+    return true;
+}
+
+function sendPostWithFields(select) {
     const json = JSON.stringify(mapToObject(select), replacer);
 
     let request = new XMLHttpRequest();
     request.open('POST', window.location.href);
     request.setRequestHeader("Content-Type", "application/json");
     request.send(json);
+}
+
+function generateFieldsAndWhere() {
+
+    let select = generateSelect();
+    select.set("where", generateWhereCondition())
+
+    if (select.get("select").length === 0) {
+        window.alert("Ничего не выбрано в select");
+        return;
+    }
+
+    if (isWhereOk(select.get("where")) === false) {
+        window.alert("Поле where заполнено некорректным образом");
+        return;
+    }
+
+    sendPostWithFields(select);
 
 }
 
