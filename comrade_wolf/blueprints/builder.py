@@ -31,6 +31,7 @@ def __generate_front_fields(fields: dict) -> dict:
             if show_group not in front_fields:
                 front_fields[show_group] = {}
 
-            front_fields[show_group][fields[field]["name"]] = {"field": field, "type": fields[field]["type"]}
+            front_fields[show_group][fields[field]["name"]] = {"field": field, "type": fields[field]["type"],
+                                                               "front_field_type": fields[field]["front_field_type"]}
 
     return front_fields

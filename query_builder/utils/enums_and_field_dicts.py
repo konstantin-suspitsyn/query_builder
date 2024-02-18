@@ -76,3 +76,11 @@ class FrontendTypeFields(enum.Enum):
     SELECT = "select"
     WHERE = "where"
     CALCULATIONS = "calculations"
+
+
+class FrontFieldTypes(enum.Enum):
+    DATE = "date"
+    NUMBER = "number"
+    DATETIME = "datetime"
+    BOOLEAN = "boolean"
+    TEXT = "text"
