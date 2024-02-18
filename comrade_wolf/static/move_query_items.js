@@ -1,3 +1,4 @@
+// Map to set correct input using frontend type
 let frontInputTypes = new Map();
 frontInputTypes.set("date", "date");
 frontInputTypes.set("number", "text");
@@ -134,7 +135,7 @@ addEventListener("click", (event) => {
         return;
     }
 
-    disableButtons()
+    disableAggregateAndDelete()
 
     if (clickedElement === undefined || clickedElement === null) {
         return;
@@ -149,7 +150,7 @@ addEventListener("click", (event) => {
 });
 
 
-function disableButtons() {
+function disableAggregateAndDelete() {
 
     enableButton("aggregate-field", true);
     enableButton("delete-field", true);
@@ -175,7 +176,7 @@ function selectMe(event) {
 
 function deleteSelected() {
     clickedElement.remove();
-    disableButtons();
+    disableAggregateAndDelete();
 }
 
 function addDropdown() {

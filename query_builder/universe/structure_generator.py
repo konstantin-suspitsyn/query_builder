@@ -14,6 +14,8 @@ class StructureGenerator:
     __joins_by_table: dict = {}
     # All fields with properties
     __all_fields: dict = {}
+    # Pre-defined where fields
+    __where_predefined: dict = {}
 
     # Table name structure database.scheme.table
     TABLE_NAME_STRUCTURE: str = "{}.{}.{}"
