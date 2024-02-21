@@ -58,7 +58,39 @@ const whereBoxId = "where-field";
 const selectBoxId = "select-field";
 
 
+function addElementToWhere(elementInSelect) {
 
+    elementInSelect = elementInSelect.cloneNode(true);
+
+    elementInSelect.removeAttribute("onclick");
+
+    elementInSelect.setAttribute("onclick","addWhereId(event)");
+
+    let whereBlock = document.getElementById("where-field");
+    let currentAndOrOr = document.getElementById("selected-or-and");
+
+    if ((whereBlock.childElementCount === 0) && (currentAndOrOr === null)) {
+
+        whereBlock.appendChild(elementInSelect);
+        return;
+    }
+
+    if ((whereBlock.childElementCount > 0) && (currentAndOrOr === null)) {
+
+        insertWrapper(whereBlock, andDiv);
+        currentAndOrOr = document.getElementById("selected-or-and");
+
+    }
+
+    if (currentAndOrOr != null) {
+        currentAndOrOr.appendChild(elementInSelect);
+    }
+}
+
+function includeIntoWhere(event) {
+    let elementInSelect = event.target;
+    addElementToWhere(elementInSelect);
+}
 
 function includeIntoQuery(event) {
     /**
@@ -85,6 +117,7 @@ function includeIntoQuery(event) {
     if (whatToAdd === SELECT) {
         // Все для select
         document.getElementById("select-field").appendChild(elementInSelect);
+
     }
 
     if (whatToAdd === WHERE) {
@@ -93,33 +126,14 @@ function includeIntoQuery(event) {
             window.alert("Поле является вычисляемым. Его нельзя использовать во where");
             return;
         }
-
-        elementInSelect.innerHTML += whereOptions;
-        elementInSelect.innerHTML += "<span class='placeholder'></span>";
-        elementInSelect.setAttribute("onclick","addWhereId(event)");
-
-        // Все для select
-        let isNoAndAndNoOr = true;
-
-        let whereBlock = document.getElementById("where-field");
-        let currentAndOrOr = document.getElementById("selected-or-and");
-
-        if ((whereBlock.childElementCount === 0) && (currentAndOrOr === null)) {
-
-            whereBlock.appendChild(elementInSelect);
-            return;
+        if (!elementInSelect.classList.contains("where")) {
+            elementInSelect.innerHTML += whereOptions;
+            elementInSelect.innerHTML += "<span class='placeholder'></span>";
         }
 
-        if ((whereBlock.childElementCount > 0) && (currentAndOrOr === null)) {
+        // Все для where
 
-            insertWrapper(whereBlock, andDiv);
-            currentAndOrOr = document.getElementById("selected-or-and");
-
-        }
-
-        if (currentAndOrOr != null) {
-            currentAndOrOr.appendChild(elementInSelect);
-        }
+        addElementToWhere(elementInSelect);
 
     }
 
@@ -489,6 +503,12 @@ function buttonPrint(element) {
 
     let where = new Map();
     let whereConditions = new Map();
+
+    if (element.classList.contains("where")) {
+        whereConditions.set("operator", "predefined");
+        where.set(element.value, whereConditions);
+        return where;
+    }
 
     let dropdown = element.getElementsByTagName("select")[0];
     let inputValues = []

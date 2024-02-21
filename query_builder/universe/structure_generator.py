@@ -1,4 +1,5 @@
-from query_builder.utils.enums_and_field_dicts import ImportTypes, FieldType, FrontFieldTypes
+from query_builder.utils.data_types import WhereFields
+from query_builder.utils.enums_and_field_dicts import ImportTypes, FieldType, FrontFieldTypes, WhereFieldsProperties
 from query_builder.utils.exceptions import NoHumanNameForShownField, UnknownFieldTypeForField, UnknownFrontFieldType
 from query_builder.utils.utils import gather_data_from_toml_files_into_big_dictionary, list_toml_files_in_directory, \
     true_false_converter
@@ -15,7 +16,7 @@ class StructureGenerator:
     # All fields with properties
     __all_fields: dict = {}
     # Pre-defined where fields
-    __where_predefined: dict = {}
+    __where_predefined: WhereFields = WhereFields()
 
     # Table name structure database.scheme.table
     TABLE_NAME_STRUCTURE: str = "{}.{}.{}"
@@ -45,6 +46,7 @@ class StructureGenerator:
         self.__generate_short_tables_dictionary(toml_tables)
         self.__create_all_fields(toml_tables)
         self.__create_all_joins(toml_joins_dict)
+        self.__generate_predefined_where_fields(toml_filters_dict)
 
     def __generate_short_tables_dictionary(self, toml_tables: dict) -> None:
         """
@@ -165,6 +167,23 @@ class StructureGenerator:
                 self.__joins_by_table[table_name][join_table]["on"]["second_table_on"] = toml_joins_dict[file_name][
                     "second_table"][join_table]["second_table_on"]
 
+    def __generate_predefined_where_fields(self, toml_filters_dict):
+        """
+        Generates predefined where fields
+        :param toml_filters_dict:
+        :return:
+        """
+        for back_filter_name in toml_filters_dict.keys():
+            self.__where_predefined.add_where_field(back_filter_name,
+                                                    toml_filters_dict[back_filter_name][
+                                                        WhereFieldsProperties.FRONTEND_NAME.value],
+                                                    toml_filters_dict[back_filter_name][
+                                                        WhereFieldsProperties.WHERE_QUERY.value],
+                                                    toml_filters_dict[back_filter_name][
+                                                        WhereFieldsProperties.FIELDS_LIST.value],
+                                                    toml_filters_dict[back_filter_name][
+                                                        WhereFieldsProperties.SHOW_GROUP.value])
+
     def get_tables(self) -> dict:
         """
         Returns all tables
@@ -185,3 +204,10 @@ class StructureGenerator:
         :return:
         """
         return self.__joins_by_table
+
+    def get_where(self) -> WhereFields:
+        """
+        Returns pre-defined where fields
+        :return:
+        """
+        return self.__where_predefined
