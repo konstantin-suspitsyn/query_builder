@@ -84,3 +84,10 @@ class FrontFieldTypes(enum.Enum):
     DATETIME = "datetime"
     BOOLEAN = "boolean"
     TEXT = "text"
+
+
+class WhereFieldsProperties(enum.Enum):
+    FRONTEND_NAME = "front_end_name"
+    FIELDS_LIST = "fields_list"
+    WHERE_QUERY = "where_query"
+    SHOW_GROUP = "show_group"

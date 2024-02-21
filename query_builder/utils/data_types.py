@@ -255,6 +255,7 @@ class CteFields(UserDict):
     Dictionary for CTE
     Which fields to use for join of main cte and fact_tables CTEs in QueryGenerator class
     """
+
     def add_table_if_not_exists(self, table_name: str) -> None:
         if table_name not in self.data:
             self.data[table_name] = set()
@@ -266,3 +267,32 @@ class CteFields(UserDict):
     def update_field(self, table_name: str, fields_to_join: set):
         self.add_table_if_not_exists(table_name)
         self.data[table_name].update(fields_to_join)
+
+
+class WhereFields(UserDict):
+    """
+    Pre-defined WhereFields
+    Structure:
+        {"where_field_name": {front_name: front_name_value, query: query_value, tables: [table_name_value, ]}}
+    """
+    def add_where_field(self,
+                        where_field_name: str,
+                        front_name: str,
+                        query: str,
+                        tables: list,
+                        show_group: str) -> None:
+        """
+        Adds one pre-defined where field
+        :param show_group:
+        :param where_field_name:
+        :param front_name:
+        :param query:
+        :param tables:
+        :return:
+        """
+        self.data[where_field_name] = {
+            "front_name": front_name,
+            "query": query,
+            "tables": tables,
+            "show_group": show_group
+        }
