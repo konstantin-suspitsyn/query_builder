@@ -1,4 +1,4 @@
-from query_builder.utils.data_types import WhereFields
+from query_builder.utils.data_types import WhereFields, AllFields, AllTables, AllJoins
 from query_builder.utils.enums_and_field_dicts import ImportTypes, FieldType, FrontFieldTypes, WhereFieldsProperties
 from query_builder.utils.exceptions import NoHumanNameForShownField, UnknownFieldTypeForField, UnknownFrontFieldType
 from query_builder.utils.utils import gather_data_from_toml_files_into_big_dictionary, list_toml_files_in_directory, \
@@ -11,12 +11,12 @@ class StructureGenerator:
     """
 
     # Dictionary with structure {"table_name": "table_type"}
-    __short_tables_dictionary: dict = {}
-    __joins_by_table: dict = {}
+    __all_tables_short: AllTables
+    __joins_by_table: AllJoins
     # All fields with properties
-    __all_fields: dict = {}
+    __all_fields: AllFields
     # Pre-defined where fields
-    __where_predefined: WhereFields = WhereFields()
+    __where_predefined: WhereFields
 
     # Table name structure database.scheme.table
     TABLE_NAME_STRUCTURE: str = "{}.{}.{}"
@@ -32,9 +32,10 @@ class StructureGenerator:
         :param joins_folder_link: link to folder with .toml files, containing joins references
         """
 
-        self.__short_tables_dictionary = {}
-        self.__joins_by_table = {}
-        self.__all_fields = {}
+        self.__all_tables_short = AllTables()
+        self.__joins_by_table = AllJoins()
+        self.__all_fields = AllFields()
+        self.__where_predefined = WhereFields()
 
         toml_tables: dict = gather_data_from_toml_files_into_big_dictionary(
             list_toml_files_in_directory(tables_folder_link), ImportTypes.TABLE.value)
@@ -43,12 +44,12 @@ class StructureGenerator:
         toml_filters_dict: dict = gather_data_from_toml_files_into_big_dictionary(
             list_toml_files_in_directory(filters_folder_link), ImportTypes.FILTERS.value)
 
-        self.__generate_short_tables_dictionary(toml_tables)
+        self.__generate_short_tables(toml_tables)
         self.__create_all_fields(toml_tables)
-        self.__create_all_joins(toml_joins_dict)
+        self.__generate_all_joins(toml_joins_dict)
         self.__generate_predefined_where_fields(toml_filters_dict)
 
-    def __generate_short_tables_dictionary(self, toml_tables: dict) -> None:
+    def __generate_short_tables(self, toml_tables: dict) -> None:
         """
         Generates __short_tables_dictionary
         :param toml_tables: dictionary created from toml files containing tables
@@ -60,7 +61,7 @@ class StructureGenerator:
                 toml_tables[file_name]["database"],
                 toml_tables[file_name]["schema"],
                 toml_tables[file_name]["table"])
-            self.__short_tables_dictionary[complete_table_name] = table_type
+            self.__all_tables_short.add_table(complete_table_name, table_type)
 
     def __create_all_fields(self, toml_tables: dict) -> None:
         """
@@ -135,7 +136,7 @@ class StructureGenerator:
                     self.__all_fields[field_name]["calculation"] = field_calculation
                     self.__all_fields[field_name]["type"] = FieldType.CALCULATION.value
 
-    def __create_all_joins(self, toml_joins_dict) -> None:
+    def __generate_all_joins(self, toml_joins_dict: dict) -> None:
         """
         Creates all joins by every table and fills. Fills in self.__joins_by_table
         :param toml_joins_dict: created in self.__init__
@@ -167,7 +168,7 @@ class StructureGenerator:
                 self.__joins_by_table[table_name][join_table]["on"]["second_table_on"] = toml_joins_dict[file_name][
                     "second_table"][join_table]["second_table_on"]
 
-    def __generate_predefined_where_fields(self, toml_filters_dict):
+    def __generate_predefined_where_fields(self, toml_filters_dict) -> None:
         """
         Generates predefined where fields
         :param toml_filters_dict:
@@ -184,21 +185,21 @@ class StructureGenerator:
                                                     toml_filters_dict[back_filter_name][
                                                         WhereFieldsProperties.SHOW_GROUP.value])
 
-    def get_tables(self) -> dict:
+    def get_tables(self) -> AllTables:
         """
         Returns all tables
         :return: {"table_name": "table_type"}
         """
-        return self.__short_tables_dictionary
+        return self.__all_tables_short
 
-    def get_fields(self) -> dict:
+    def get_fields(self) -> AllFields:
         """
         Returns all fields
         :return:
         """
         return self.__all_fields
 
-    def get_joins(self) -> dict:
+    def get_joins(self) -> AllJoins:
         """
         Returns all joins
         :return:
