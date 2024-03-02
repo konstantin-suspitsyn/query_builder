@@ -399,7 +399,7 @@ function isWhereOk(where) {
      */
 
     if (where.size === 0) {
-        return false;
+        return true;
     }
 
     for (let value of where.values()) {
