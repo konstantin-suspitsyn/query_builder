@@ -1,6 +1,5 @@
-from query_builder.utils.data_types import WhereFields, AllFields, AllTables, AllJoins
-from query_builder.utils.enums_and_field_dicts import ImportTypes, FieldType, FrontFieldTypes, WhereFieldsProperties
-from query_builder.utils.exceptions import NoHumanNameForShownField, UnknownFieldTypeForField, UnknownFrontFieldType
+from query_builder.utils.data_types import WhereFields, AllFields, AllTables, AllJoins, FactTableJoins
+from query_builder.utils.enums_and_field_dicts import ImportTypes, WhereFieldsProperties
 from query_builder.utils.utils import gather_data_from_toml_files_into_big_dictionary, list_toml_files_in_directory, \
     true_false_converter
 
@@ -17,6 +16,8 @@ class StructureGenerator:
     __all_fields: AllFields
     # Pre-defined where fields
     __where_predefined: WhereFields
+    # What tables have to be used to join them
+    __fact_joins: FactTableJoins
 
     # Table name structure database.scheme.table
     TABLE_NAME_STRUCTURE: str = "{}.{}.{}"
@@ -36,6 +37,7 @@ class StructureGenerator:
         self.__joins_by_table = AllJoins()
         self.__all_fields = AllFields()
         self.__where_predefined = WhereFields()
+        self.__fact_joins = FactTableJoins()
 
         toml_tables: dict = gather_data_from_toml_files_into_big_dictionary(
             list_toml_files_in_directory(tables_folder_link), ImportTypes.TABLE.value)
@@ -48,6 +50,7 @@ class StructureGenerator:
         self.__create_all_fields(toml_tables)
         self.__generate_all_joins(toml_joins_dict)
         self.__generate_predefined_where_fields(toml_filters_dict)
+
 
     def __generate_short_tables(self, toml_tables: dict) -> None:
         """
@@ -70,9 +73,6 @@ class StructureGenerator:
         :return:
         """
 
-        field_types_check = [f.value for f in FieldType]
-        front_field_list_check = [f.value for f in FrontFieldTypes]
-
         for file_name in toml_tables:
 
             # Working with usual fields
@@ -85,18 +85,13 @@ class StructureGenerator:
                     field)
                 field_type: str = toml_tables[file_name]["fields"][field]["type"]
 
-                if field_type not in field_types_check:
-                    raise UnknownFieldTypeForField(field_name, field_type)
-
                 field_show: bool = true_false_converter(toml_tables[file_name]["fields"][field]["show"])
 
                 front_field_type: str | None = None
 
-                if field_show:
+                if "front_type" in toml_tables[file_name]["fields"][field]:
                     # Check if front_field type exists and in enum
                     front_field_type = toml_tables[file_name]["fields"][field]["front_type"]
-                    if front_field_type not in front_field_list_check:
-                        raise UnknownFrontFieldType(field_name, front_field_type)
 
                 show_group: str | None = None
                 if "show_group" in toml_tables[file_name]["fields"][field]:
@@ -105,36 +100,26 @@ class StructureGenerator:
                 # There is possibility than Human-name does not exist
                 field_human_name: str | None = None
 
-                # Check if name doesn't exist, show == False
-                if ("name" not in toml_tables[file_name]["fields"][field]) and (field_show is True):
-                    raise NoHumanNameForShownField(field_name)
-
                 if "name" in toml_tables[file_name]["fields"][field]:
                     field_human_name = toml_tables[file_name]["fields"][field]["name"]
 
-                self.__all_fields[field_name] = {
-                    "name": field_human_name,
-                    "show": field_show,
-                    "type": field_type,
-                    "show_group": show_group
-                }
-
-                if field_show:
-                    self.__all_fields[field_name]["front_field_type"] = front_field_type
+                field_calculation: str | None = None
 
                 # Working with predefined calculations
-                if field_type == FieldType.CALCULATION.value:
-
+                if "calculation" in toml_tables[file_name]["fields"][field]:
                     field_calculation = toml_tables[file_name]["fields"][field]["calculation"]
 
-                    field_where = None
+                field_where: str | None = None
 
-                    if "where" in toml_tables[file_name]["fields"][field]:
-                        field_where = toml_tables[file_name]["fields"][field]["where"]
+                if "where" in toml_tables[file_name]["fields"][field]:
+                    field_where = toml_tables[file_name]["fields"][field]["where"]
 
-                    self.__all_fields[field_name]["where"] = field_where
-                    self.__all_fields[field_name]["calculation"] = field_calculation
-                    self.__all_fields[field_name]["type"] = FieldType.CALCULATION.value
+                included_fields: list[str] = []
+                if "included_fields" in toml_tables[file_name]["fields"][field]:
+                    included_fields.extend(toml_tables[file_name]["fields"][field]["included_fields"])
+
+                self.__all_fields.add_field(field_name, field_show, field_type, field_human_name, front_field_type,
+                                            show_group, field_calculation, included_fields, field_where)
 
     def __generate_all_joins(self, toml_joins_dict: dict) -> None:
         """
@@ -157,16 +142,18 @@ class StructureGenerator:
                 self.__joins_by_table[table_name] = {}
 
             for join_table in toml_joins_dict[file_name]["second_table"]:
-                self.__joins_by_table[table_name][join_table] = {}
-                self.__joins_by_table[table_name][join_table]["how"] = toml_joins_dict[file_name]["second_table"][
-                    join_table]["how"]
-                self.__joins_by_table[table_name][join_table]["on"] = {}
-                self.__joins_by_table[table_name][join_table]["on"]["between_tables"] = toml_joins_dict[file_name][
-                    "second_table"][join_table]["between_tables"]
-                self.__joins_by_table[table_name][join_table]["on"]["first_table_on"] = toml_joins_dict[file_name][
-                    "second_table"][join_table]["first_table_on"]
-                self.__joins_by_table[table_name][join_table]["on"]["second_table_on"] = toml_joins_dict[file_name][
-                    "second_table"][join_table]["second_table_on"]
+                how = toml_joins_dict[file_name]["second_table"][join_table]["how"]
+                on = toml_joins_dict[file_name]["second_table"][join_table]["between_tables"]
+                first_table_on = toml_joins_dict[file_name]["second_table"][join_table]["first_table_on"]
+                second_table_on = toml_joins_dict[file_name]["second_table"][join_table]["second_table_on"]
+
+                self.__joins_by_table.add_join(table_name, join_table, how, on, first_table_on, second_table_on)
+
+            if "fact_table_joins" in toml_joins_dict[file_name]:
+                for join_table in toml_joins_dict[file_name]["fact_table_joins"]:
+                    between_tables: list = toml_joins_dict[file_name]["fact_table_joins"][join_table]["join_tables"]
+
+                    self.__fact_joins.add_join(table_name, join_table, between_tables)
 
     def __generate_predefined_where_fields(self, toml_filters_dict) -> None:
         """
@@ -212,3 +199,10 @@ class StructureGenerator:
         :return:
         """
         return self.__where_predefined
+
+    def get_fact_join(self) -> FactTableJoins:
+        """
+        Returns FactTableJoins
+        :return:
+        """
+        return self.__fact_joins
