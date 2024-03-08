@@ -1,8 +1,8 @@
 import copy
 
 from query_builder.universe.possible_joins import AllPossibleJoins
-from query_builder.utils.data_types import FieldsForQuery, CteFields
-from query_builder.utils.enums_and_field_dicts import TableTypes, FieldType, FrontendTypeFields
+from query_builder.utils.data_types import FieldsForQuery, CteFields, AllFields, AllTables
+from query_builder.utils.enums_and_field_dicts import TableTypes, FieldType, FrontFieldTypes
 from query_builder.utils.utils import join_on_to_string
 
 
@@ -13,7 +13,9 @@ class QueryGenerator:
     """
 
     joins: AllPossibleJoins
-    tables_dict: dict
+    tables_dict: AllTables
+    all_fields: AllFields
+
     CTE_JOIN = "cte_join"
 
     CTE = "cte_{}"
@@ -26,20 +28,24 @@ class QueryGenerator:
     OUT_K = "out"
     QUERY_K = "query"
     SELECT_K = "select"
-    CALCULATIONS_K = "calculations"
+    CALCULATIONS_K = "calculation"
     ALL_CTE = "all_cte"
     WHERE_K = "where"
 
-    def __init__(self, tables_dict: dict):
+    def __init__(self, tables_dict: AllTables, all_fields: AllFields):
 
         # All tables
         self.tables_dict = tables_dict
         # ShortestDistance is singleton
         self.joins: AllPossibleJoins = AllPossibleJoins()
 
-    def generate_select_for_one_data_table(self, selected_objects: FieldsForQuery) -> str:
+        self.all_fields = all_fields
+
+    def generate_select_for_one_data_table(self, selected_objects: FieldsForQuery,
+                                           exclude_tables: list | None = None) -> str:
         """
         Generates query for one fact table and any number of dimension tables
+        :param exclude_tables: only one fact table in cte. Other fact tables should go here
         :param selected_objects: selected objects. Must have only one data table
         :return: SQL query
         """
@@ -82,7 +88,8 @@ class QueryGenerator:
         for key in TableTypes:
             list_of_tables = list(selected_objects[key.value].keys())
             for table in list_of_tables:
-                select.update(selected_objects[key.value][table][self.SELECT_K])
+                for current_calculation in selected_objects[key.value][table][self.SELECT_K]:
+                    select.update([current_calculation])
                 # TODO: SYNC this with BBBB
                 i: int = 0
                 for c in selected_objects[key.value][table][self.CALCULATIONS_K]:
@@ -91,9 +98,16 @@ class QueryGenerator:
                     i += 1
                 where.update(selected_objects[key.value][table][self.WHERE_K])
 
-        where.update(selected_objects[FrontendTypeFields.WHERE.value])
+        where_condition: dict = selected_objects.get_overall_where()
 
-        query = self.__generate_sql_text_for_one_data_table(select, calculation, where, from_table, join_tables)
+        if len(where) > 0:
+            where_condition = {"and": [where_condition]}
+            for where_item in where:
+                where_condition["and"].append({"predefined": where_item})
+
+        where_string: str = self.generate_where_string(where_condition, exclude_tables)
+
+        query = self.__generate_sql_text_for_one_data_table(select, calculation, where_string, from_table, join_tables)
 
         return query
 
@@ -161,9 +175,9 @@ class QueryGenerator:
                 temp_join = self.joins.get_join(fact_table, dimension_table)
                 last_join_table_no: int = max(list(temp_join.keys()))
                 dimension_join_fields[fact_table] = {TableTypes.DIMENSION.value:
-                                                     set(temp_join[last_join_table_no]["on"]["second_table_on"]),
+                                                         set(temp_join[last_join_table_no]["on"]["second_table_on"]),
                                                      TableTypes.DATA.value:
-                                                     set(temp_join[0]["on"]["first_table_on"]),
+                                                         set(temp_join[0]["on"]["first_table_on"]),
                                                      }
 
             same_dimensions: bool = True
@@ -194,8 +208,11 @@ class QueryGenerator:
                         dimension_select.add_field(fact_table, field.split(".")[-1])
 
                     # This is for fact cte_i to be able to join with main cte
-                    selected_objects[TableTypes.DIMENSION.value][dimension_table][FieldType.SELECT.value].update(
-                        dimension_join_fields[fact_table][TableTypes.DIMENSION.value])
+                    for current_dimension_field in dimension_join_fields[fact_table][TableTypes.DIMENSION.value]:
+                        if current_dimension_field not in \
+                                selected_objects[TableTypes.DIMENSION.value][dimension_table][FieldType.SELECT.value]:
+                            (selected_objects[TableTypes.DIMENSION.value][dimension_table][FieldType.SELECT.value].
+                             append(current_dimension_field))
 
                 if not same_dimensions:
                     # All fields in dimension tables are NOT the same for joins for fact table
@@ -212,12 +229,16 @@ class QueryGenerator:
         cte_properties[self.ALL_CTE] = {}
 
         for fact_table in fact_tables:
+
+            other_fact_tables = list(fact_tables)
+            other_fact_tables.remove(fact_table)
+
             current_cte = self.CTE.format(cte_no)
             cte_properties[self.ALL_CTE][current_cte] = {}
             current_select = copy.deepcopy(selected_objects)
             current_select.remove_all_fact_tables_except_named(fact_table)
             cte_properties[self.ALL_CTE][current_cte][self.QUERY_K] = self.generate_select_for_one_data_table(
-                current_select)
+                current_select, other_fact_tables)
             cte_properties[self.ALL_CTE][current_cte][self.OUT_K] = set()
 
             # Fields to be joined with cte_m
@@ -235,16 +256,19 @@ class QueryGenerator:
         cte_properties[self.DIMENSION_SELECTS_K] = set()
 
         for dimension_table in dimension_tables:
+            ### УДАЛИТЬ J
+            j = selected_objects[TableTypes.DIMENSION.value][dimension_table][
+                FieldType.SELECT.value]
             cte_properties[self.DIMENSION_SELECTS_K].update(
                 selected_objects[TableTypes.DIMENSION.value][dimension_table][
-                    "select"])
+                    FieldType.SELECT.value])
 
         # Build all CTEs
         query = self.__generate_text_query_for_multiple_tables(cte_properties)
 
         return query
 
-    def __generate_sql_text_for_one_data_table(self, select: set, calculation: set, where: set,
+    def __generate_sql_text_for_one_data_table(self, select: set, calculation: set, where: str,
                                                from_table: str, join_tables: set) -> str:
         """
         Generates sql from one data table
@@ -269,7 +293,7 @@ class QueryGenerator:
             calculation_select = "\n\t,"
 
         if len(calculation) > 0:
-            calculation_select += "\t,".join(calculation)
+            calculation_select += "\n\t,".join(calculation)
             query += calculation_select
 
         query += from_query
@@ -281,12 +305,8 @@ class QueryGenerator:
                 query += "\n{} join {} \n on {}".format(join_temp["how"], end_table,
                                                         join_on_to_string(join_temp["on"]))
 
-        if len(where) == 1:
-            where_query += list(where)[0]
-        if len(where) > 1:
-            where_query += "\nand ".join(["({})".format(f) for f in where])
         if len(where) > 0:
-            query += where_query
+            query += where_query + where
 
         if (len(calculation) > 0) and (len(select) > 0):
             query += group_by
@@ -373,3 +393,77 @@ class QueryGenerator:
         query += "\n" + "\n".join(left_join_cte)
 
         return query
+
+    def generate_where_string(self, where: dict, exclude_tables: list[str] | None = None) -> str:
+        """
+        Generate where string for query
+        Taking into account how the date and text should be formatted
+
+        :param exclude_tables:
+        :param where:
+        :return:
+        """
+
+        if exclude_tables is None:
+            exclude_tables = []
+
+        where_pieces = []
+        join_word: str = ""
+
+        where_string: str
+
+        for key in where:
+            # Exclude cte from where
+            if key in exclude_tables:
+                continue
+            if key == "or" or key == "and":
+                if len(where[key]) > 1:
+                    join_word = ") \n{} (".format(key)
+
+                for item in where[key]:
+                    where_pieces.append(self.generate_where_string(item, exclude_tables))
+
+            elif key == "predefined":
+                where_pieces.append(where[key])
+
+            else:
+                where_pieces.append(self.__generate_single_where(key, where[key]))
+
+        where_string = join_word.join(where_pieces)
+        if len(join_word) > 0:
+            where_string = "({})".format(where_string)
+
+        return where_string
+
+    def __generate_single_where(self, field_name: str, condition: dict) -> str:
+        """
+        Generates single where taking into account how the date and text should be formatted
+        :param condition:
+        :return:
+        """
+
+        # "{} {} {}".format(field_name, operator, condition_of_where)
+        where_string_placeholder: str = "{} {} {}"
+
+        single_field_placeholder: str = "'{}'"
+
+        frontend_type: str = self.all_fields.get_frontend_type(field_name)
+
+        if frontend_type in [FrontFieldTypes.NUMBER.value]:
+            single_field_placeholder = "{}"
+
+        if condition["operator"] == "between":
+            conditions = " \nAND ".join([single_field_placeholder.format(f) for f in condition["condition"]])
+
+            return where_string_placeholder.format(field_name, "between", conditions)
+
+        if condition["operator"] == "in":
+            conditions = [single_field_placeholder.format(f) for f in condition["condition"].strip().split(";")]
+            return where_string_placeholder.format(field_name, "in", ", ".join(conditions))
+
+        operator = condition["operator"]
+        condition_string: str = condition["condition"][0]
+
+        return where_string_placeholder.format(field_name,
+                                               operator,
+                                               single_field_placeholder.format(condition_string))

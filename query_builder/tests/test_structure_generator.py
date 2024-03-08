@@ -3,7 +3,6 @@ import os
 
 from query_builder.universe.structure_generator import StructureGenerator
 from query_builder.utils.enums_and_field_dicts import TableTypes
-from query_builder.utils.exceptions import NoMandatoryKeyException
 
 
 class TestStructureGenerator(unittest.TestCase):
@@ -26,7 +25,7 @@ class TestStructureGenerator(unittest.TestCase):
         """
         Should throw an error for non-existing key
         """
-        with self.assertRaises(NoMandatoryKeyException):
+        with self.assertRaises(KeyError):
             StructureGenerator(
                 r"./test_db_structure/tables_test_structure_generator_incorrect_table",
                 r"./test_db_structure/joins_test_structure_generator",
