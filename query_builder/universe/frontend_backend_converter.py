@@ -1,7 +1,8 @@
 from typing import Tuple
 
-from query_builder.utils.data_types import FieldsFromFrontend, FieldsForQuery
+from query_builder.utils.data_types import FieldsFromFrontend, FieldsForQuery, AllFields, AllTables, WhereFields
 from query_builder.utils.enums_and_field_dicts import FieldType, TableTypes, FrontendTypeFields
+from query_builder.utils.language_specific_builders import BaseCalculationBuilder
 from query_builder.utils.utils import get_table_from_field, get_fields
 
 
@@ -10,7 +11,8 @@ class FrontendBackendConverter:
     Converts data from frontend to backend for further query creation
     """
 
-    def __init__(self, all_fields: dict, all_tables: dict) -> None:
+    def __init__(self, all_fields: AllFields, all_tables: AllTables, predefined_where: WhereFields,
+                 calculation_builder: BaseCalculationBuilder) -> None:
         """
         Initialize class
         :param all_fields: all fields with properties
@@ -18,8 +20,36 @@ class FrontendBackendConverter:
         """
         self.all_fields = all_fields
         self.all_tables = all_tables
+        self.predefined_where = predefined_where
+        self.calculation_builder = calculation_builder
 
-    def convert_from_frontend_to_backend(self, fields_for_query_structure: FieldsFromFrontend) -> FieldsForQuery:
+    def convert_from_frontend_to_backend(self, frontend_fields: dict) -> FieldsForQuery:
+        all_fields_by_table: FieldsForQuery = FieldsForQuery()
+
+        # Add select fields
+        for field in frontend_fields["select"]:
+            all_fields_by_table.add_field(field, self.all_fields, self.all_tables)
+
+        # Add Calculation fields
+        for field in frontend_fields["calculation"]:
+            for calc_table_name in field:
+                if field[calc_table_name] == "PREDEFINED":
+                    all_fields_by_table.add_field(calc_table_name, self.all_fields, self.all_tables)
+                else:
+                    all_fields_by_table.add_user_calculations_field(
+                        calc_table_name,
+                        self.calculation_builder.generate_calculation(calc_table_name, field[calc_table_name]),
+                        self.all_tables)
+
+        # Add where fields
+        all_fields_by_table.add_overall_where(frontend_fields["where"],
+                                              self.all_fields,
+                                              self.all_tables,
+                                              self.predefined_where)
+
+        return all_fields_by_table
+
+    def del_convert_from_frontend_to_backend(self, fields_for_query_structure: FieldsFromFrontend) -> FieldsForQuery:
         """
         Receives data from frontend as type of FieldsFromFrontend and converts it to FieldsForQuery type
         :param fields_for_query_structure:
@@ -137,3 +167,4 @@ class FrontendBackendConverter:
             raise RuntimeError("Таблицу из поля не получилось получить")
 
         return data_tables, dimension_tables
+

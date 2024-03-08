@@ -19,4 +19,5 @@ class TestJoins(unittest.TestCase):
         GenerateJoins(table_structure.get_joins(), table_structure.get_tables())
         possible_joins = AllPossibleJoins()
         joins = possible_joins.get_all_joins()
+        print(type(joins))
         print(joins)

@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 from query_builder.universe.possible_joins import AllPossibleJoins
+from query_builder.utils.data_types import AllJoins, AllTables
 
 
 class GenerateJoins:
@@ -12,7 +13,7 @@ class GenerateJoins:
 
     __join_weights = {"left": 2, "right": 3, "inner": 1}
 
-    def __init__(self, direct_joins: dict, all_tables: dict) -> None:
+    def __init__(self, direct_joins: AllJoins, all_tables: AllTables) -> None:
         """
         :param direct_joins: direct joins are coming from StructureGenerator.get_joins()
         :param all_tables: all tables coming from StructureGenerator.get_tables()
@@ -92,7 +93,11 @@ class GenerateJoins:
 
         self.joins.all_joins_by_starting_table({start_table: join_of_start_table})
 
-    def __recursive_joins(self, created_joins: dict, all_joins: dict, all_tables: set, next_node: str | None) -> dict:
+    def __recursive_joins(self,
+                          created_joins: dict,
+                          all_joins: AllJoins,
+                          all_tables: set,
+                          next_node: str | None) -> dict:
         """
         Recursive way to generate connections using Dijkstra algorithm
         :param created_joins: created joins on previous step

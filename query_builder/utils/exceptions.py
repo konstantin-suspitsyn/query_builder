@@ -63,8 +63,13 @@ class FieldsFromFrontendWrongValue(Exception):
     Exception if any value under key of FieldsFromFrontend class is not list
     """
 
-    def __init__(self, key: str) -> None:
-        message = f"Все поступающие значения внутри словаря должны быть типом list. Проверь {key}"
+    def __init__(self, key: str, should_be_type: str, is_type_of: str) -> None:
+        """
+        :param key: Key of dictionary
+        :param should_be_type: key should be instance of this field
+        :param is_type_of: key is instance of this field
+        """
+        message = f"Проблема с данными из frontend. {key} должен быть типом {should_be_type}, а является {is_type_of}"
         super().__init__(message)
 
 
@@ -78,6 +83,24 @@ class UnknownFrontFieldType(Exception):
     """
     Exception if front field type is not in FrontFieldTypes(enum.Enum)
     """
+
     def __init__(self, field_name: str, front_field_type: str) -> None:
         message = f"Неизвестный тип поля для front-end. Поле: {field_name}, тип поля {front_field_type}"
+        super().__init__(message)
+
+
+class NotAllMandatoryFields(Exception):
+    """
+    Thrown if any of the mandatory fields does not exist
+    """
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class ObjectExists(Exception):
+    """
+    Thrown if an object exists already
+    """
+    def __init__(self, message: str):
         super().__init__(message)

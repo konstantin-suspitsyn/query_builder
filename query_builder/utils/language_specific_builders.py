@@ -3,7 +3,7 @@ class BaseCalculationBuilder:
     Base class for all basic calculation builders
     """
 
-    def generate_calculation(self, field_name: str, calculation_type: str):
+    def generate_calculation(self, field_name: str, calculation_type: str) -> str:
         if calculation_type == "sum":
             return self.generate_sum(field_name)
 
