@@ -437,27 +437,9 @@ function sendPostWithFields(select) {
     const json = JSON.stringify(mapToObject(select), replacer);
 
     let request = new XMLHttpRequest();
-
-    request.onload = () => {
-          if (request.readyState === 4 && request.status === 200) {
-              let sqlText = document.getElementById("sql-text");
-              sqlText.innerHTML = request.responseText;
-            console.log(request.responseText);
-          } else {
-            console.log(`Error: ${request.status}`);
-          }
-        };
-
     request.open('POST', window.location.href);
     request.setRequestHeader("Content-Type", "application/json");
     request.send(json);
-
-
-
-}
-
-function reqListener() {
-  console.log(this.responseText);
 }
 
 function generateFieldsAndWhere() {

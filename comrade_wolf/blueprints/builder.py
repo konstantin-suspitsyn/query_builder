@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, current_app
+from flask import Blueprint, current_app, render_template, request
 
 from query_builder.utils.data_types import WhereFields, AllFields
 
@@ -17,9 +17,6 @@ def create():
     if request.method == 'POST':
         print("AAAA")
         print(request.get_json())
-        q: str = current_app.build_query(request.get_json())
-        print(q)
-        return q
 
     return render_template("builder/create.html", front_fields=front_fields)
 

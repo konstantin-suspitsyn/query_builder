@@ -48,14 +48,10 @@ class TestQueryGenerator(unittest.TestCase):
             r"./../tests/test_db_structure/test_standard_filters",
         )
 
-        frontend_json = {
-            'select': ['query_builder.public.dim_calendar.date', 'query_builder.public.dim_calendar.week_no',
-                       'query_builder.public.dim_calendar.first_day_of_month'],
-            'calculation': [{'query_builder.public.fact_sales.value': 'sum'},
-                            {'query_builder.public.fact_sales.money': 'sum'},
-                            {'query_builder.public.fact_stock.value': 'sum'}], 'where': {
-                'and': [{'query_builder.public.dim_item.name': {'operator': '=', 'condition': ['Товар']}},
-                        {'query_builder.public.dim_calendar.date': {'operator': '=', 'condition': ['2024-03-06']}}]}}
+        frontend_json = {'select': ['query_builder.public.dim_calendar.date', 'query_builder.public.dim_calendar.date'],
+                         'calculation': [{'query_builder.public.fact_sales.money': 'count'},
+                                         {'query_builder.public.fact_stock.value': 'sum'}], 'where': {
+                'query_builder.public.dim_calendar.date': {'operator': '=', 'condition': ['2024-03-06']}}}
 
         postgres_generator = PostgresCalculationBuilder()
 
@@ -72,28 +68,27 @@ class TestQueryGenerator(unittest.TestCase):
         possible_joins = AllPossibleJoins()
         print(query_generator.generate_select_for_multiple_data_tables(fields_rebuild))
 
-    def test_convert_from_frontend_to_backend_a(self):
+    def test_convert_from_frontend_to_backend_one_table(self):
         table_structure = StructureGenerator(
-            r"./../tests/test_db_structure/test_tables",
-            r"./../tests/test_db_structure/test_joins",
+            r"./../tests/test_db_structure/test_tele_tables",
+            r"./../tests/test_db_structure/test_tele_joins",
             r"./../tests/test_db_structure/test_standard_filters",
         )
 
-        frontend_json = {'select': ['query_builder.public.dim_calendar.date', 'query_builder.public.dim_calendar.week_no', 'query_builder.public.fact_sales.value'], 'calculation': [], 'where': {}}
+        two_tables_from_front = FieldsFromFrontend({
+            "select": [
+                "query_builder.public.dim_calendar.date",
+                "abc.abc.dim_account_bud.bk_account_bud",
+            ],
+            "calculations": [
+                "sum(abc.abc.hyperion.value)"
+            ],
+            "where": ["query_builder.public.dim_calendar.date = '2023-01-01'"]
+        })
 
-        postgres_generator = PostgresCalculationBuilder()
-
-        print(table_structure.get_fact_join())
-
-        front_to_back = FrontendBackendConverter(table_structure.get_fields(), table_structure.get_tables(),
-                                                 table_structure.get_where(), postgres_generator)
-
-        fields_rebuild = front_to_back.convert_from_frontend_to_backend(frontend_json)
-        print(fields_rebuild)
-        query_generator = QueryGenerator(table_structure.get_tables(), table_structure.get_fields(), table_structure.get_where())
-
-        j = table_structure.get_joins()
-
+        front_to_back = FrontendBackendConverter(table_structure.get_fields(), table_structure.get_tables())
+        fields_rebuild = front_to_back.convert_from_frontend_to_backend(two_tables_from_front)
+        query_generator = QueryGenerator(table_structure.get_tables())
         GenerateJoins(table_structure.get_joins(), table_structure.get_tables())
         possible_joins = AllPossibleJoins()
         print(query_generator.generate_select_for_one_data_table(fields_rebuild))
