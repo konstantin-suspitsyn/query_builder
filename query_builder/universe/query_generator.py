@@ -1,7 +1,7 @@
 import copy
 
 from query_builder.universe.possible_joins import AllPossibleJoins
-from query_builder.utils.data_types import FieldsForQuery, CteFields, AllFields, AllTables
+from query_builder.utils.data_types import FieldsForQuery, CteFields, AllFields, AllTables, WhereFields
 from query_builder.utils.enums_and_field_dicts import TableTypes, FieldType, FrontFieldTypes
 from query_builder.utils.utils import join_on_to_string
 
@@ -32,7 +32,7 @@ class QueryGenerator:
     ALL_CTE = "all_cte"
     WHERE_K = "where"
 
-    def __init__(self, tables_dict: AllTables, all_fields: AllFields):
+    def __init__(self, tables_dict: AllTables, all_fields: AllFields, predefined_where: WhereFields):
 
         # All tables
         self.tables_dict = tables_dict
@@ -40,6 +40,24 @@ class QueryGenerator:
         self.joins: AllPossibleJoins = AllPossibleJoins()
 
         self.all_fields = all_fields
+
+        self.where_fields = predefined_where
+
+    def generate_query(self, selected_objects: FieldsForQuery) -> str:
+        """
+        Select query for fields
+        :param selected_objects:
+        :return: query string
+        """
+
+        query: str
+
+        if len(selected_objects.get_fact_tables()) > 1:
+            query = self.generate_select_for_multiple_data_tables(selected_objects)
+        else:
+            query = self.generate_select_for_one_data_table(selected_objects)
+
+        return query
 
     def generate_select_for_one_data_table(self, selected_objects: FieldsForQuery,
                                            exclude_tables: list | None = None) -> str:
@@ -175,9 +193,9 @@ class QueryGenerator:
                 temp_join = self.joins.get_join(fact_table, dimension_table)
                 last_join_table_no: int = max(list(temp_join.keys()))
                 dimension_join_fields[fact_table] = {TableTypes.DIMENSION.value:
-                                                         set(temp_join[last_join_table_no]["on"]["second_table_on"]),
+                                                     set(temp_join[last_join_table_no]["on"]["second_table_on"]),
                                                      TableTypes.DATA.value:
-                                                         set(temp_join[0]["on"]["first_table_on"]),
+                                                     set(temp_join[0]["on"]["first_table_on"]),
                                                      }
 
             same_dimensions: bool = True
@@ -256,9 +274,7 @@ class QueryGenerator:
         cte_properties[self.DIMENSION_SELECTS_K] = set()
 
         for dimension_table in dimension_tables:
-            ### УДАЛИТЬ J
-            j = selected_objects[TableTypes.DIMENSION.value][dimension_table][
-                FieldType.SELECT.value]
+
             cte_properties[self.DIMENSION_SELECTS_K].update(
                 selected_objects[TableTypes.DIMENSION.value][dimension_table][
                     FieldType.SELECT.value])
@@ -423,8 +439,8 @@ class QueryGenerator:
                 for item in where[key]:
                     where_pieces.append(self.generate_where_string(item, exclude_tables))
 
-            elif key == "predefined":
-                where_pieces.append(where[key])
+            elif where[key]["operator"] == "predefined":
+                where_pieces.append(self.where_fields.get_where_query(key))
 
             else:
                 where_pieces.append(self.__generate_single_where(key, where[key]))

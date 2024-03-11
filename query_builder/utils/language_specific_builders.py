@@ -1,4 +1,7 @@
-class BaseCalculationBuilder:
+from abc import ABC, abstractmethod
+
+
+class BaseCalculationBuilder(ABC):
     """
     Base class for all basic calculation builders
     """
@@ -22,26 +25,81 @@ class BaseCalculationBuilder:
         if calculation_type == "count distinct":
             return self.generate_count_distinct(field_name)
 
+    @abstractmethod
     def generate_sum(self, field_name: str) -> str:
         pass
 
+    @abstractmethod
     def generate_avg(self, field_name: str) -> str:
         pass
 
+    @abstractmethod
     def generate_count_distinct(self, field_name: str) -> str:
         pass
 
+    @abstractmethod
     def generate_max(self, field_name: str) -> str:
         pass
 
+    @abstractmethod
     def generate_min(self, field_name: str) -> str:
         pass
 
+    @abstractmethod
     def generate_count(self, field_name: str) -> str:
         pass
 
+    @abstractmethod
+    def type_formatting(self, front_type_format: str) -> str:
+        """
+        Returns template for formatting of where
+        :param front_type_format: front_type_format should be the same as frontend
+        :return:
+        """
+
+        basic_format: str = "{}"
+
+        formats_and_placeholders: dict = {
+            "text": "'{}'",
+            "date": "'{}'",
+            "startswith": "'%{}'",
+            "endswith": "'{}%'",
+            "like": "'%{}%'",
+        }
+
+        if front_type_format in formats_and_placeholders:
+            basic_format = formats_and_placeholders[front_type_format]
+
+        return basic_format
+
 
 class PostgresCalculationBuilder(BaseCalculationBuilder):
+    """
+    Postgres-like
+    """
+
+    def type_formatting(self, front_type_format: str) -> str:
+        """
+                Returns template for formatting of where
+                :param front_type_format: front_type_format should be the same as frontend
+                :return:
+                """
+
+        basic_format: str = "{}"
+
+        formats_and_placeholders: dict = {
+            "text": "'{}'",
+            "date": "'{}'",
+            "startswith": "'%{}'",
+            "endswith": "'{}%'",
+            "like": "'%{}%'",
+        }
+
+        if front_type_format in formats_and_placeholders:
+            basic_format = formats_and_placeholders[front_type_format]
+
+        return basic_format
+
     def generate_sum(self, field_name: str) -> str:
         return "SUM({})".format(field_name)
 
