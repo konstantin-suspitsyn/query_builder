@@ -75,3 +75,7 @@ a.for-select a.selected {
 #selected-or-and {
     border: 4px solid red;
 }
+
+#sql-text {
+    white-space: pre-wrap;
+}
