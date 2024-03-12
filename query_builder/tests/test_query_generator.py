@@ -79,7 +79,7 @@ class TestQueryGenerator(unittest.TestCase):
             r"./../tests/test_db_structure/test_standard_filters",
         )
 
-        frontend_json = {'select': ['query_builder.public.dim_calendar.date', 'query_builder.public.dim_calendar.week_no', 'query_builder.public.fact_sales.value'], 'calculation': [], 'where': {}}
+        frontend_json = {'select': ['query_builder.public.dim_calendar.date'], 'calculation': [], 'where': {}}
 
         postgres_generator = PostgresCalculationBuilder()
 

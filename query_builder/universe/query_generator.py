@@ -89,7 +89,7 @@ class QueryGenerator:
                 table_ = list(selected_objects.get_fact_tables())[0]
                 if not self.joins.has_join(table_, dimension_table):
                     raise RuntimeError("No join")
-        elif len(selected_objects.get_dimension_tables()) > 1:
+        elif len(selected_objects.get_dimension_tables()) > 0:
 
             from_table = self.__get_dimension_table_that_connects_with_others(selected_objects.get_dimension_tables())
 
