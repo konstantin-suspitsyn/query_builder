@@ -17,7 +17,11 @@ def create():
     if request.method == 'POST':
         print("AAAA")
         print(request.get_json())
-        q: str = current_app.build_query(request.get_json())
+        q: str
+        try:
+            q: str = current_app.build_query(request.get_json())
+        except Exception as e:
+            q = "Произошла ошибка"
         print(q)
         return q
 
