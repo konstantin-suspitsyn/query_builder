@@ -367,7 +367,12 @@ function insertInput(event) {
     if (currentElement.value === "between") {
         spanToInsert.innerHTML += betweenInput.replace("%TYPE%", inputType.get("%TYPE%")).replace("%TYPE%", inputType.get("%TYPE%"));
     } else {
-        spanToInsert.innerHTML += lonelyInput.replace("%TYPE%", inputType.get("%TYPE%"));
+        if (currentElement.value === "in") {
+            spanToInsert.innerHTML += lonelyInput.replace("%TYPE%", "text");
+        }
+        else {
+            spanToInsert.innerHTML += lonelyInput.replace("%TYPE%", inputType.get("%TYPE%"));
+        }
     }
 
 
