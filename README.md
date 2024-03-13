@@ -45,4 +45,3 @@ from cte_main
 where if needed
 group by if needed
 ```
-
