@@ -4,6 +4,7 @@ from query_builder.universe.possible_joins import AllPossibleJoins
 from query_builder.utils.data_types import FieldsForQuery, AllFields, AllTables, WhereFields
 from query_builder.utils.enums_and_field_dicts import TableTypes, FieldType, FrontFieldTypes
 from query_builder.utils.exceptions import QueryBuilderException
+from query_builder.utils.language_specific_builders import BaseCalculationBuilder
 from query_builder.utils.utils import join_on_to_string
 
 
@@ -33,7 +34,8 @@ class QueryGenerator:
     ALL_CTE = "all_cte"
     WHERE_K = "where"
 
-    def __init__(self, tables_dict: AllTables, all_fields: AllFields, predefined_where: WhereFields):
+    def __init__(self, tables_dict: AllTables, all_fields: AllFields, predefined_where: WhereFields,
+                 language_specific_builder: BaseCalculationBuilder):
 
         # All tables
         self.tables_dict = tables_dict
@@ -43,6 +45,8 @@ class QueryGenerator:
         self.all_fields = all_fields
 
         self.where_fields = predefined_where
+
+        self.language_specific = language_specific_builder
 
     def generate_query(self, selected_objects: FieldsForQuery) -> str:
         """
@@ -294,7 +298,7 @@ class QueryGenerator:
 
             return from_table
 
-        raise RuntimeError("No join")
+        raise QueryBuilderException("No join")
 
     def __generate_text_query_for_multiple_tables(self, cte_properties: dict) -> str:
         """
@@ -409,12 +413,8 @@ class QueryGenerator:
         # "{} {} {}".format(field_name, operator, condition_of_where)
         where_string_placeholder: str = "{} {} {}"
 
-        single_field_placeholder: str = "'{}'"
-
         frontend_type: str = self.all_fields.get_frontend_type(field_name)
-
-        if frontend_type in [FrontFieldTypes.NUMBER.value]:
-            single_field_placeholder = "{}"
+        single_field_placeholder: str = self.language_specific.type_formatting(frontend_type)
 
         if condition["operator"] == "between":
             conditions = " \nAND ".join([single_field_placeholder.format(f) for f in condition["condition"]])

@@ -27,7 +27,8 @@ class ComradeWolfFlask(Flask):
 
         self.__query_generator = QueryGenerator(self.__structure_generator.get_tables(),
                                                 self.__structure_generator.get_fields(),
-                                                self.__structure_generator.get_where())
+                                                self.__structure_generator.get_where(),
+                                                self.__calculation_builder)
 
         GenerateJoins(self.__structure_generator.get_joins(), self.__structure_generator.get_tables())
         AllPossibleJoins()
