@@ -440,6 +440,9 @@ function sendPostWithFields(select) {
 
     request.onload = () => {
           if (request.readyState === 4 && request.status === 200) {
+              let overlayElement = document.getElementById("overlay");
+              overlayElement.classList.remove("no-show");
+              overlayElement.classList.add("show");
               let sqlText = document.getElementById("sql-text");
               sqlText.innerHTML = request.responseText;
             console.log(request.responseText);
@@ -641,3 +644,8 @@ function selectCalculatedButton(selectButton, isPreCalculated) {
     return buttonInfo;
 }
 
+function closeOverlay() {
+    let overlayElement = document.getElementById("overlay");
+    overlayElement.classList.remove("show");
+    overlayElement.classList.add("no-show");
+}

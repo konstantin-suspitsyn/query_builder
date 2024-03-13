@@ -79,3 +79,52 @@ a.for-select a.selected {
 #sql-text {
     white-space: pre-wrap;
 }
+
+.show {
+    display: block;
+}
+
+.no-show {
+    display: none;
+}
+
+#overlay {
+      position: fixed; /* Sit on top of the page content */
+      width: 100%; /* Full width (cover the whole page) */
+      height: 100%; /* Full height (cover the whole page) */
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(33, 37, 41, 1); /* Black background with opacity */
+      z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+    color: ghostwhite;
+}
+
+.value-front {
+    background-image: url("images/to_calculate.png");
+    background-repeat: no-repeat;
+    background-position: 8px center;
+    padding-left: 20px;
+}
+
+.where-front {
+    background-image: url("images/funnel.png");
+    background-repeat: no-repeat;
+    background-position: 8px center;
+    padding-left: 20px;
+}
+
+.calculation-front {
+    background-image: url("images/pre-calculated.png");
+    background-repeat: no-repeat;
+    background-position: 8px center;
+    padding-left: 20px;
+}
+
+.select-front {
+    background-image: url("images/to_select.png");
+    background-repeat: no-repeat;
+    background-position: 8px center;
+    padding-left: 20px;
+}

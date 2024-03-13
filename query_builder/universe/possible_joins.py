@@ -1,6 +1,7 @@
 from collections import UserDict
 from typing_extensions import Self
 
+from query_builder.utils.exceptions import QueryBuilderException
 from query_builder.utils.utils import singleton
 
 
@@ -84,7 +85,8 @@ class AllPossibleJoins(UserDict):
         :return:
         """
         if not self.has_join(start_table, end_table):
-            return False
+            message: str = "Не найден join между таблицами"
+            raise QueryBuilderException(message)
         return self.data[start_table][end_table]
 
     def get_all_joins(self) -> Self:

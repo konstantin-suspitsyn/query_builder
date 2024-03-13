@@ -3,6 +3,7 @@ import copy
 from query_builder.universe.possible_joins import AllPossibleJoins
 from query_builder.utils.data_types import FieldsForQuery, CteFields, AllFields, AllTables, WhereFields
 from query_builder.utils.enums_and_field_dicts import TableTypes, FieldType, FrontFieldTypes
+from query_builder.utils.exceptions import QueryBuilderException
 from query_builder.utils.utils import join_on_to_string
 
 
@@ -99,7 +100,7 @@ class QueryGenerator:
 
         # Remove table used in from
         if from_table not in join_tables:
-            raise RuntimeError
+            raise QueryBuilderException("Соединения между таблицами не настроены")
 
         join_tables.remove(from_table)
 
@@ -119,7 +120,10 @@ class QueryGenerator:
         where_condition: dict = selected_objects.get_overall_where()
 
         if len(where) > 0:
-            where_condition = {"and": [where_condition]}
+            if where_condition != {}:
+                where_condition = {"and": [where_condition]}
+            else:
+                where_condition = {"and": []}
             for where_item in where:
                 where_condition["and"].append({"predefined": where_item})
 
@@ -167,12 +171,12 @@ class QueryGenerator:
         # Fast check if all joins exist
         for fact_table in fact_tables:
             if len(selected_objects[TableTypes.DATA.value][fact_table][self.SELECT_K]) > 0:
-                raise RuntimeError("Select on fact join")
+                raise QueryBuilderException("Выбраны 2 или более фактовые таблицы с невозможностью их соединения")
 
             for dimension_table in dimension_tables:
 
                 if not self.joins.has_join(fact_table, dimension_table):
-                    raise RuntimeError("No join")
+                    raise QueryBuilderException("Соединения между выбранными таблицами не настроены")
 
         # TODO: check if fact tables doesn't have any non-calculation fields
 
@@ -438,6 +442,9 @@ class QueryGenerator:
 
                 for item in where[key]:
                     where_pieces.append(self.generate_where_string(item, exclude_tables))
+
+            elif key == "predefined":
+                where_pieces.append(where[key])
 
             elif where[key]["operator"] == "predefined":
                 where_pieces.append(self.where_fields.get_where_query(key))
