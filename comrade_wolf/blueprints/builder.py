@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, current_app
 
 from query_builder.utils.data_types import WhereFields, AllFields
+from query_builder.utils.exceptions import QueryBuilderException
 
 bp = Blueprint('builder', __name__, url_prefix='/builder')
 
@@ -15,14 +16,17 @@ def create():
     print(front_fields)
 
     if request.method == 'POST':
-        print("AAAA")
         print(request.get_json())
         q: str
         try:
             q: str = current_app.build_query(request.get_json())
+        except QueryBuilderException as e:
+            q = str(e)
+            q += "\nОбратитесь к администратору"
         except Exception as e:
-            q = "Произошла ошибка"
-        print(q)
+            print(e)
+            q = "\nПроизошла неизвестная ошибка. Обратитесь к администратору"
+        # print(q)
         return q
 
     return render_template("builder/create.html", front_fields=front_fields)

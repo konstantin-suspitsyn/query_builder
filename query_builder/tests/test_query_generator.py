@@ -79,7 +79,9 @@ class TestQueryGenerator(unittest.TestCase):
             r"./../tests/test_db_structure/test_standard_filters",
         )
 
-        frontend_json = {'select': ['query_builder.public.dim_calendar.date'], 'calculation': [], 'where': {}}
+        frontend_json = {'select': ['query_builder.public.dim_calendar.week_no', 'query_builder.public.dim_item.name', 'query_builder.public.dim_item.price'], 'calculation': [{'query_builder.public.fact_stock.value': 'sum'}, {'query_builder.public.fact_sales.value': 'sum'}], 'where': {'query_builder.public.dim_calendar.date': {'operator': '=', 'condition': ['2024-03-12']}}}
+
+
 
         postgres_generator = PostgresCalculationBuilder()
 
@@ -96,4 +98,7 @@ class TestQueryGenerator(unittest.TestCase):
 
         GenerateJoins(table_structure.get_joins(), table_structure.get_tables())
         possible_joins = AllPossibleJoins()
-        print(query_generator.generate_select_for_one_data_table(fields_rebuild))
+        print(query_generator.generate_select_for_multiple_data_tables(fields_rebuild))
+
+    def check_in(self):
+        pass
