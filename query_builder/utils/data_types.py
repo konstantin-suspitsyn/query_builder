@@ -751,3 +751,12 @@ class FieldsForQuery(UserDict):
 
     def get_overall_where(self) -> dict:
         return self.data["overall_where"]
+
+    def get_select_fields(self, table_name: str) -> list:
+        if table_name in self.data[TableTypes.DATA.value]:
+            return self.data[TableTypes.DATA.value][table_name]["select"]
+
+        if table_name in self.data[TableTypes.DIMENSION.value]:
+            return self.data[TableTypes.DIMENSION.value][table_name]["select"]
+
+        raise RuntimeError

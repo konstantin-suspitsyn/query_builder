@@ -367,7 +367,12 @@ function insertInput(event) {
     if (currentElement.value === "between") {
         spanToInsert.innerHTML += betweenInput.replace("%TYPE%", inputType.get("%TYPE%")).replace("%TYPE%", inputType.get("%TYPE%"));
     } else {
-        spanToInsert.innerHTML += lonelyInput.replace("%TYPE%", inputType.get("%TYPE%"));
+        if (currentElement.value === "in") {
+            spanToInsert.innerHTML += lonelyInput.replace("%TYPE%", "text");
+        }
+        else {
+            spanToInsert.innerHTML += lonelyInput.replace("%TYPE%", inputType.get("%TYPE%"));
+        }
     }
 
 
@@ -437,9 +442,30 @@ function sendPostWithFields(select) {
     const json = JSON.stringify(mapToObject(select), replacer);
 
     let request = new XMLHttpRequest();
+
+    request.onload = () => {
+          if (request.readyState === 4 && request.status === 200) {
+              let overlayElement = document.getElementById("overlay");
+              overlayElement.classList.remove("no-show");
+              overlayElement.classList.add("show");
+              let sqlText = document.getElementById("sql-text");
+              sqlText.innerHTML = request.responseText;
+            console.log(request.responseText);
+          } else {
+            console.log(`Error: ${request.status}`);
+          }
+        };
+
     request.open('POST', window.location.href);
     request.setRequestHeader("Content-Type", "application/json");
     request.send(json);
+
+
+
+}
+
+function reqListener() {
+  console.log(this.responseText);
 }
 
 function generateFieldsAndWhere() {
@@ -623,3 +649,8 @@ function selectCalculatedButton(selectButton, isPreCalculated) {
     return buttonInfo;
 }
 
+function closeOverlay() {
+    let overlayElement = document.getElementById("overlay");
+    overlayElement.classList.remove("show");
+    overlayElement.classList.add("no-show");
+}

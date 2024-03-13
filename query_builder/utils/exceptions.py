@@ -102,5 +102,14 @@ class ObjectExists(Exception):
     """
     Thrown if an object exists already
     """
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class QueryBuilderException(Exception):
+    """
+    Error occurring during building error
+    """
     def __init__(self, message: str):
         super().__init__(message)

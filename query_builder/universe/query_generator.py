@@ -1,8 +1,10 @@
 import copy
 
 from query_builder.universe.possible_joins import AllPossibleJoins
-from query_builder.utils.data_types import FieldsForQuery, CteFields, AllFields, AllTables
+from query_builder.utils.data_types import FieldsForQuery, AllFields, AllTables, WhereFields
 from query_builder.utils.enums_and_field_dicts import TableTypes, FieldType, FrontFieldTypes
+from query_builder.utils.exceptions import QueryBuilderException
+from query_builder.utils.language_specific_builders import BaseCalculationBuilder
 from query_builder.utils.utils import join_on_to_string
 
 
@@ -32,7 +34,8 @@ class QueryGenerator:
     ALL_CTE = "all_cte"
     WHERE_K = "where"
 
-    def __init__(self, tables_dict: AllTables, all_fields: AllFields):
+    def __init__(self, tables_dict: AllTables, all_fields: AllFields, predefined_where: WhereFields,
+                 language_specific_builder: BaseCalculationBuilder):
 
         # All tables
         self.tables_dict = tables_dict
@@ -40,6 +43,26 @@ class QueryGenerator:
         self.joins: AllPossibleJoins = AllPossibleJoins()
 
         self.all_fields = all_fields
+
+        self.where_fields = predefined_where
+
+        self.language_specific = language_specific_builder
+
+    def generate_query(self, selected_objects: FieldsForQuery) -> str:
+        """
+        Select query for fields
+        :param selected_objects:
+        :return: query string
+        """
+
+        query: str
+
+        if len(selected_objects.get_fact_tables()) > 1:
+            query = self.generate_select_for_multiple_data_tables(selected_objects)
+        else:
+            query = self.generate_select_for_one_data_table(selected_objects)
+
+        return query
 
     def generate_select_for_one_data_table(self, selected_objects: FieldsForQuery,
                                            exclude_tables: list | None = None) -> str:
@@ -71,7 +94,7 @@ class QueryGenerator:
                 table_ = list(selected_objects.get_fact_tables())[0]
                 if not self.joins.has_join(table_, dimension_table):
                     raise RuntimeError("No join")
-        elif len(selected_objects.get_dimension_tables()) > 1:
+        elif len(selected_objects.get_dimension_tables()) > 0:
 
             from_table = self.__get_dimension_table_that_connects_with_others(selected_objects.get_dimension_tables())
 
@@ -81,7 +104,7 @@ class QueryGenerator:
 
         # Remove table used in from
         if from_table not in join_tables:
-            raise RuntimeError
+            raise QueryBuilderException("Соединения между таблицами не настроены")
 
         join_tables.remove(from_table)
 
@@ -101,7 +124,10 @@ class QueryGenerator:
         where_condition: dict = selected_objects.get_overall_where()
 
         if len(where) > 0:
-            where_condition = {"and": [where_condition]}
+            if where_condition != {}:
+                where_condition = {"and": [where_condition]}
+            else:
+                where_condition = {"and": []}
             for where_item in where:
                 where_condition["and"].append({"predefined": where_item})
 
@@ -149,12 +175,12 @@ class QueryGenerator:
         # Fast check if all joins exist
         for fact_table in fact_tables:
             if len(selected_objects[TableTypes.DATA.value][fact_table][self.SELECT_K]) > 0:
-                raise RuntimeError("Select on fact join")
+                raise QueryBuilderException("Выбраны 2 или более фактовые таблицы с невозможностью их соединения")
 
             for dimension_table in dimension_tables:
 
                 if not self.joins.has_join(fact_table, dimension_table):
-                    raise RuntimeError("No join")
+                    raise QueryBuilderException("Соединения между выбранными таблицами не настроены")
 
         # TODO: check if fact tables doesn't have any non-calculation fields
 
@@ -162,62 +188,6 @@ class QueryGenerator:
         # If for every fact table, joined dimension table has the same field(s)
         #   Those fields should be used for later join of two fact fields
         # If not then fact fields will be used
-
-        # Main CTE fields
-        # Main CTE is cte created from other CTEs
-        dimension_select = CteFields()
-
-        # Check if fact tables joins to the same field in dimension tables
-
-        for dimension_table in dimension_tables:
-            dimension_join_fields: dict = {}
-            for fact_table in fact_tables:
-                temp_join = self.joins.get_join(fact_table, dimension_table)
-                last_join_table_no: int = max(list(temp_join.keys()))
-                dimension_join_fields[fact_table] = {TableTypes.DIMENSION.value:
-                                                         set(temp_join[last_join_table_no]["on"]["second_table_on"]),
-                                                     TableTypes.DATA.value:
-                                                         set(temp_join[0]["on"]["first_table_on"]),
-                                                     }
-
-            same_dimensions: bool = True
-
-            dim_set_no: int = 0
-            fact_tables_in_join = list(dimension_join_fields.keys())
-            while dim_set_no < len(fact_tables_in_join) - 1:
-
-                current_fact_table = fact_tables_in_join[dim_set_no]
-                next_fact_table = fact_tables_in_join[dim_set_no + 1]
-
-                if (len(dimension_join_fields[current_fact_table][TableTypes.DIMENSION.value]) !=
-                        len(dimension_join_fields[next_fact_table][TableTypes.DIMENSION.value])):
-                    same_dimensions = False
-                    break
-
-                for item in dimension_join_fields[current_fact_table][TableTypes.DIMENSION.value]:
-                    if item not in dimension_join_fields[next_fact_table][TableTypes.DIMENSION.value]:
-                        same_dimensions = False
-                        break
-
-                dim_set_no += 1
-
-            for fact_table in fact_tables_in_join:
-                if same_dimensions:
-                    # All fields in dimension tables are the same for joins for fact table
-                    for field in dimension_join_fields[fact_table][TableTypes.DIMENSION.value]:
-                        dimension_select.add_field(fact_table, field.split(".")[-1])
-
-                    # This is for fact cte_i to be able to join with main cte
-                    for current_dimension_field in dimension_join_fields[fact_table][TableTypes.DIMENSION.value]:
-                        if current_dimension_field not in \
-                                selected_objects[TableTypes.DIMENSION.value][dimension_table][FieldType.SELECT.value]:
-                            (selected_objects[TableTypes.DIMENSION.value][dimension_table][FieldType.SELECT.value].
-                             append(current_dimension_field))
-
-                if not same_dimensions:
-                    # All fields in dimension tables are NOT the same for joins for fact table
-                    dimension_select.update_field(fact_table, dimension_join_fields[fact_table][
-                        TableTypes.DATA.value])
 
         # Start building CTEs
         # TODO: create special format
@@ -241,9 +211,6 @@ class QueryGenerator:
                 current_select, other_fact_tables)
             cte_properties[self.ALL_CTE][current_cte][self.OUT_K] = set()
 
-            # Fields to be joined with cte_m
-            cte_properties[self.ALL_CTE][current_cte][self.CTE_JOIN] = dimension_select[fact_table]
-
             # TODO: SYNC this with BBBB
             for item in range(len(selected_objects[TableTypes.DATA.value][fact_table][
                                       self.CALCULATIONS_K])):
@@ -256,9 +223,7 @@ class QueryGenerator:
         cte_properties[self.DIMENSION_SELECTS_K] = set()
 
         for dimension_table in dimension_tables:
-            ### УДАЛИТЬ J
-            j = selected_objects[TableTypes.DIMENSION.value][dimension_table][
-                FieldType.SELECT.value]
+
             cte_properties[self.DIMENSION_SELECTS_K].update(
                 selected_objects[TableTypes.DIMENSION.value][dimension_table][
                     FieldType.SELECT.value])
@@ -333,7 +298,7 @@ class QueryGenerator:
 
             return from_table
 
-        raise RuntimeError("No join")
+        raise QueryBuilderException("No join")
 
     def __generate_text_query_for_multiple_tables(self, cte_properties: dict) -> str:
         """
@@ -360,15 +325,15 @@ class QueryGenerator:
         cte_query: list[str] = []
 
         # START generate code for CTEs
+        dimension_selects = [f.split(".")[-1] for f in cte_properties[self.DIMENSION_SELECTS_K]]
 
         for cte in cte_properties[self.ALL_CTE]:
             # Generates selects for main_cte
-            main_cte_table_queries.append(union_cte_query.format("\n\t,".join(cte_properties[self.ALL_CTE][cte][
-                                                                                  self.CTE_JOIN]), cte))
+            main_cte_table_queries.append(union_cte_query.format("\n\t,".join(dimension_selects), cte))
             cte_query.append(cte_template.format(cte, cte_properties[self.ALL_CTE][cte][self.QUERY_K]))
             and_join: list[str] = []
 
-            for field in cte_properties[self.ALL_CTE][cte][self.CTE_JOIN]:
+            for field in dimension_selects:
                 and_join.append(field_equality.format(cte, field, self.MAIN_CTE, field))
 
             for field in cte_properties[self.ALL_CTE][cte][self.OUT_K]:
@@ -426,6 +391,9 @@ class QueryGenerator:
             elif key == "predefined":
                 where_pieces.append(where[key])
 
+            elif where[key]["operator"] == "predefined":
+                where_pieces.append(self.where_fields.get_where_query(key))
+
             else:
                 where_pieces.append(self.__generate_single_where(key, where[key]))
 
@@ -445,12 +413,8 @@ class QueryGenerator:
         # "{} {} {}".format(field_name, operator, condition_of_where)
         where_string_placeholder: str = "{} {} {}"
 
-        single_field_placeholder: str = "'{}'"
-
         frontend_type: str = self.all_fields.get_frontend_type(field_name)
-
-        if frontend_type in [FrontFieldTypes.NUMBER.value]:
-            single_field_placeholder = "{}"
+        single_field_placeholder: str = self.language_specific.type_formatting(frontend_type)
 
         if condition["operator"] == "between":
             conditions = " \nAND ".join([single_field_placeholder.format(f) for f in condition["condition"]])
