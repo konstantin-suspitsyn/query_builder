@@ -406,9 +406,6 @@ class WhereFields(UserDict):
     def get_fields(self, table_name: str) -> list:
         return self.data[table_name]["fields"]
 
-    def get_where_query(self, where_name: str) -> str:
-        return self.data[where_name]["query"]
-
 
 class AllJoins(UserDict):
     """
@@ -548,12 +545,7 @@ class FieldsForQuery(UserDict):
 
         self.add_table_if_not_exist(table_name, table_type)
 
-        if field_type in [FieldType.SELECT.value, FieldType.VALUE.value]:
-
-            # If value comes in select without calculation we treat it as select
-            if field_type == FieldType.VALUE.value:
-                field_type = FieldType.SELECT.value
-
+        if field_type == FieldType.SELECT.value:
             if field_name not in self.data[table_type][table_name][field_type]:
                 self.data[table_type][table_name][field_type].append(field_name)
 
