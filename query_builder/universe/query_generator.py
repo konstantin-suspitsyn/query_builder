@@ -223,7 +223,6 @@ class QueryGenerator:
         cte_properties[self.DIMENSION_SELECTS_K] = set()
 
         for dimension_table in dimension_tables:
-
             cte_properties[self.DIMENSION_SELECTS_K].update(
                 selected_objects[TableTypes.DIMENSION.value][dimension_table][
                     FieldType.SELECT.value])
@@ -410,24 +409,26 @@ class QueryGenerator:
         :return:
         """
 
-        # "{} {} {}".format(field_name, operator, condition_of_where)
-        where_string_placeholder: str = "{} {} {}"
+        # "{} {}".format(field_name, condition_of_where)
+        where_string_placeholder: str = "{} {}"
 
         frontend_type: str = self.all_fields.get_frontend_type(field_name)
-        single_field_placeholder: str = self.language_specific.type_formatting(frontend_type)
+        operator: str = condition["operator"]
+        single_field_placeholder: str = self.language_specific.type_formatting(frontend_type, operator)
 
-        if condition["operator"] == "between":
-            conditions = " \nAND ".join([single_field_placeholder.format(f) for f in condition["condition"]])
+        condition_string: str
 
-            return where_string_placeholder.format(field_name, "between", conditions)
+        if operator == "between":
+            condition_string = self.language_specific.operator_formatting(operator).format(
+                single_field_placeholder.format(condition["condition"][0]),
+                single_field_placeholder.format(condition["condition"][1]), )
 
-        if condition["operator"] == "in":
+        elif operator == "in":
             conditions = [single_field_placeholder.format(f) for f in condition["condition"].strip().split(";")]
-            return where_string_placeholder.format(field_name, "in", ", ".join(conditions))
+            condition_string = "({})".format(", ".join(conditions))
 
-        operator = condition["operator"]
-        condition_string: str = condition["condition"][0]
+        else:
+            condition_string: str = single_field_placeholder.format(condition["condition"][0])
 
-        return where_string_placeholder.format(field_name,
-                                               operator,
-                                               single_field_placeholder.format(condition_string))
+        return where_string_placeholder.format(field_name, self.language_specific.operator_formatting(operator).format(
+            condition_string))

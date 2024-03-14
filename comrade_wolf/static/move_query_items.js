@@ -15,7 +15,7 @@ let whatToAdd = SELECT;
 const selectOptions = "<select name=\"select_options\">\n" +
     "  <option selected=\"selected\" value=\"select\">Выбрать</option>\n" +
     "  <option value=\"count\">Количество</option>\n" +
-    "  <option value=\"distinct count\">Кол-во уникальных</option>\n" +
+    "  <option value=\"count distinct\">Кол-во уникальных</option>\n" +
     "</select>"
 
 const calculationOptions = "<select name=\"select_options\">\n" +
@@ -27,7 +27,7 @@ const calculationOptions = "<select name=\"select_options\">\n" +
     "</select>"
 
 const whereOptions = "<select onchange=\"insertInput(event)\" name=\"select_options\">\n" +
-    "  <option value=\"=\">Выбери</option>\n" +
+    "  <option value=\"\">Выбери</option>\n" +
     "  <option value=\"=\">Равно</option>\n" +
     "  <option value=\">\">Больше</option>\n" +
     "  <option value=\"<\">Меньше</option>\n" +
@@ -38,6 +38,8 @@ const whereOptions = "<select onchange=\"insertInput(event)\" name=\"select_opti
     "  <option value=\"not like\">Не содержит</option>\n" +
     "  <option value=\"in\">В списке</option>\n" +
     "  <option value=\"not in\">Не в списке</option>\n" +
+    "  <option value=\"startswith\">Начинается с</option>\n" +
+    "  <option value=\"endswith\">Кончается на</option>\n" +
     "</select>"
 
 const lonelyInput = "<input type=\"%TYPE%\" required minlength=\"4\" maxlength=\"8\" size=\"10\" />"

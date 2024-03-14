@@ -32,7 +32,7 @@ class TestQueryGenerator(unittest.TestCase):
 
         fields_rebuild = front_to_back.convert_from_frontend_to_backend(frontend_json)
         # print(fields_rebuild)
-        query_generator = QueryGenerator(table_structure.get_tables(), table_structure.get_fields(), postgres_generator)
+        query_generator = QueryGenerator(table_structure.get_tables(), table_structure.get_fields(), table_structure.get_where(), postgres_generator)
 
         j = table_structure.get_joins()
 
