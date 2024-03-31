@@ -406,6 +406,9 @@ class WhereFields(UserDict):
     def get_fields(self, table_name: str) -> list:
         return self.data[table_name]["fields"]
 
+    def get_where_query(self, field_name: str) -> str:
+        return self.data[field_name]["query"]
+
 
 class AllJoins(UserDict):
     """

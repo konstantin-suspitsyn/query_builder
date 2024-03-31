@@ -2,7 +2,7 @@ import copy
 
 from query_builder.universe.possible_joins import AllPossibleJoins
 from query_builder.utils.data_types import FieldsForQuery, AllFields, AllTables, WhereFields
-from query_builder.utils.enums_and_field_dicts import TableTypes, FieldType, FrontFieldTypes
+from query_builder.utils.enums_and_field_dicts import TableTypes, FieldType
 from query_builder.utils.exceptions import QueryBuilderException
 from query_builder.utils.language_specific_builders import BaseCalculationBuilder
 from query_builder.utils.utils import join_on_to_string
@@ -428,7 +428,7 @@ class QueryGenerator:
             condition_string = "({})".format(", ".join(conditions))
 
         else:
-            condition_string: str = single_field_placeholder.format(condition["condition"][0])
+            condition_string: str = self.language_specific.operator_formatting(operator).format(
+                single_field_placeholder.format(condition["condition"][0]))
 
-        return where_string_placeholder.format(field_name, self.language_specific.operator_formatting(operator).format(
-            condition_string))
+        return where_string_placeholder.format(field_name, condition_string)
