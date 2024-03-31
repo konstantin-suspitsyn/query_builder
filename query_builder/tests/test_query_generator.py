@@ -1,11 +1,11 @@
 import unittest
 
-from query_builder.universe.frontend_backend_converter import FrontendBackendConverter
-from query_builder.universe.joins_generator import GenerateJoins
-from query_builder.universe.possible_joins import AllPossibleJoins
-from query_builder.universe.query_generator import QueryGenerator
-from query_builder.universe.structure_generator import StructureGenerator
-from query_builder.utils.language_specific_builders import PostgresCalculationBuilder
+from comradewolf.universe.frontend_backend_converter import FrontendBackendConverter
+from comradewolf.universe.joins_generator import GenerateJoins
+from comradewolf.universe.possible_joins import AllPossibleJoins
+from comradewolf.universe.query_generator import QueryGenerator
+from comradewolf.universe.structure_generator import StructureGenerator
+from comradewolf.utils.language_specific_builders import PostgresCalculationBuilder
 
 
 class TestQueryGenerator(unittest.TestCase):

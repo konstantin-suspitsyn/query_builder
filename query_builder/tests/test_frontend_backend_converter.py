@@ -1,8 +1,8 @@
 import unittest
 
-from query_builder.universe.frontend_backend_converter import FrontendBackendConverter
-from query_builder.universe.structure_generator import StructureGenerator
-from query_builder.utils.data_types import FieldsFromFrontend
+from comradewolf.universe.frontend_backend_converter import FrontendBackendConverter
+from comradewolf.universe.structure_generator import StructureGenerator
+from comradewolf.utils.data_types import FieldsFromFrontend
 
 
 def create_structure_generator():
@@ -24,10 +24,10 @@ class TestFrontendBackendConverter(unittest.TestCase):
                                              table_structure.get_where())
 
         frontend_fields = {
-            'select': ['query_builder.public.dim_calendar.date', 'query_builder.public.dim_calendar.week_no',
-                       'query_builder.public.dim_store.bk_address'], 'calculation': [], 'where': {
+            'select': ['comradewolf.public.dim_calendar.date', 'comradewolf.public.dim_calendar.week_no',
+                       'comradewolf.public.dim_store.bk_address'], 'calculation': [], 'where': {
                 'and': [{'filter_one': {'operator': 'predefined'}},
-                        {'query_builder.public.dim_item.name': {'operator': '=', 'condition': ['111']}}]}}
+                        {'comradewolf.public.dim_item.name': {'operator': '=', 'condition': ['111']}}]}}
 
         converted_fields = converter.convert_from_frontend_to_backend(frontend_fields)
 
